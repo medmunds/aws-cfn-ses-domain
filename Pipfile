@@ -1,0 +1,17 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+
+[dev-packages]
+# boto3 included in Lambda Execution Environment
+# https://docs.aws.amazon.com/lambda/latest/dg/current-supported-versions.html
+awscli = "*"
+boto3 = "*"
+botocore = "*"
+cfn-lint = "*"
+
+[requires]
+python_version = "3.6"
