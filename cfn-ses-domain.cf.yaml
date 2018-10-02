@@ -1,0 +1,59 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: >
+  Creates an AWS Lambda Function that can be used as a CloudFormation CustomResource
+  to provision and verify an Amazon SES domain identity for sending and/or receiving
+  email. (See the readme for more information.)
+
+Resources:
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Sid: AssumeLambdaExecutionRole
+          Effect: Allow
+          Principal:
+            Service: lambda.amazonaws.com
+          Action: sts:AssumeRole
+      ManagedPolicyArns:
+      # (allows logging)
+      - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+      - PolicyName: ProvisionSESDomainIdentities
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Sid: AllowSESDomainIdentityProvisioning
+            Effect: Allow
+            Action:
+            - ses:DeleteIdentity
+            - ses:GetIdentityDkimAttributes
+            - ses:GetIdentityMailFromDomainAttributes
+            - ses:GetIdentityVerificationAttributes
+            - ses:SetIdentityDkimEnabled
+            - ses:SetIdentityMailFromDomain
+            - ses:VerifyDomainDkim
+            - ses:VerifyDomainIdentity
+            Resource: "*"
+
+  LambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: CloudFormation custom SES domain provisioning
+      Handler: index.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Runtime: python3.6
+      Timeout: 30
+      Code:
+        ZipFile: >
+          # TODO: @import index.py
+
+Outputs:
+  Name:
+    Description: An AWS::CloudFormation::CustomResource LambdaFunction
+    Value: !Ref LambdaFunction
+  Arn:
+    Description: An AWS::CloudFormation::CustomResource LambdaFunction
+    Value: !GetAtt LambdaFunction.Arn
