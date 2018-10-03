@@ -203,7 +203,7 @@ def send(event, context, response_status, reason=None, response_data=None, physi
 
     request = Request(event["ResponseURL"], method="PUT",
                       data=response_body.encode("utf-8"),
-                      headers={"Content-Type": "application/json"})
+                      headers={"Content-Type": ""})  # "application/json" will cause 403
     try:
         response = urlopen(request)
     except HTTPError as exc:
