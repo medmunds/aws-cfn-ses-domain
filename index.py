@@ -100,7 +100,7 @@ def update_ses_domain_identity(domain, properties):
         mail_from_domain = "{MailFromSubdomain}.{Domain}".format(**properties)
         outputs.update({
             "MailFromDomain": mail_from_domain,
-            "MailFromMX": "feedback-smtp.{Region}.amazonaws.com".format(**properties),
+            "MailFromMX": "feedback-smtp.{Region}.amazonses.com".format(**properties),
             "MailFromSPF": '"v=spf1 include:amazonses.com -all"',
         })
     else:
