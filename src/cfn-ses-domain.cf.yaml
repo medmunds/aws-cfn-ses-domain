@@ -45,10 +45,9 @@ Resources:
       Handler: index.lambda_handler
       Role: !GetAtt LambdaExecutionRole.Arn
       Runtime: python3.6
-      Timeout: 30
       Code:
-        ZipFile: >
-          # TODO: @import index.py
+        ZipFile: |
+          @import index.py
 
 Outputs:
   Name:

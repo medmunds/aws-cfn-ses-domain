@@ -1,38 +1,33 @@
-BUILD_DIR = build
+SRC_DIR := src
+BUILD_DIR := build
+TESTS_DIR := tests
 
-build: build.zip
-
-
-build.zip:	index.py Pipfile  ## Deployable AWS Lambda package
-	rm -rf ${BUILD_DIR} build.zip
-	mkdir -p ${BUILD_DIR}
-	pipenv lock -r > ${BUILD_DIR}/requirements.txt
-	pipenv run pip install --no-deps -t ${BUILD_DIR}/ \
-		-r ${BUILD_DIR}/requirements.txt
-	cp -p -v index.py ${BUILD_DIR}/
-	(cd ${BUILD_DIR}; zip -r -9 ../build.zip .)
+CF_SOURCES := $(wildcard $(SRC_DIR)/*.cf.yaml)
+CF_OUTPUTS := $(patsubst $(SRC_DIR)%, $(BUILD_DIR)%, $(CF_SOURCES))
 
 
-deploy:	build.zip  ## Upload build to AWS Lambda
-	aws lambda update-function-code \
-		--function-name cfn-ses-domain \
-		--zip-file fileb://build.zip
+.PHONY: build
+build: $(CF_OUTPUTS)
 
 
-initial_deploy: build.zip  ## Upload build to AWS Lambda (first time only)
-	aws lambda create-function \
-		--function-name cfn-ses-domain \
-		--zip-file fileb://build.zip \
-		--role arn:aws:iam::${AWS_ACCOUNT_ID}:role/lambda-cfn-ses-domain  \
-		--handler index.lambda_handler \
-		--runtime python3.6 \
-		--timeout 30 \
-		--memory-size 128
+$(BUILD_DIR)/%.cf.yaml: $(SRC_DIR)/%.cf.yaml
+	@mkdir -p $(BUILD_DIR)
+	./process-import "$<" > "$@"
 
 
+.PHONY: clean
+clean:
+	rm -rf "$(BUILD_DIR)"
+
+
+.PHONY: test
 test:
-	pipenv run python -m unittest discover --start-directory tests --top-level-directory .
+	pipenv run python -m unittest discover \
+		--start-directory "$(TESTS_DIR)" \
+		--top-level-directory "$(SRC_DIR)"
 
 
-lint:
-	pipenv run cfn-lint *.cf.yaml
+.PHONY: lint
+lint: $(CF_SOURCES) *.cf.yaml
+	# TODO: cfn-lint only checks a single filename
+	pipenv run cfn-lint "$<"

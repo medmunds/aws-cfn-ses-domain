@@ -1,0 +1,54 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: >
+  Example using cfn-ses-domain custom CloudFormation type to provision
+  an Amazon SES domain identity and maintain necessary DNS records in Route53
+
+Parameters:
+  Domain:
+    Type: String
+    Description: >
+      The domain name you want to provision (e.g., "corp.example.com").
+
+Resources:
+  # Use a nested stack to create the AWS Lambda Function for the Custom::SESDomain type.
+  # This stack's "Arn" output is what you'll need for the custom resource's ServiceToken.
+  CfnSESDomain:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://s3.amazonaws.com/aws-utils.medmunds.com/cfn-ses-domain.cf.yaml
+
+  # Use Custom::SESDomain to provision a domain identity in SES
+  MySESDomain:
+    Type: Custom::SESDomain
+    Properties:
+      ServiceToken: !GetAtt CfnSESDomain.Outputs.Arn
+      # Domain is required; all others are optional
+      Domain: !Ref Domain
+      EnableReceive: true
+      EnableSend: true
+      MailFromSubdomain: "mail"
+      TTL: "600"
+      CustomDMARC: '"v=DMARC1; p=quarantine; pct=100; sp=none; aspf=r;"'
+
+  # Create a Route53 zone for your domain
+  # (omit this if your domain is already in Route53)
+  MyRoute53Zone:
+    Type: AWS::Route53::HostedZone
+    Properties:
+      Name: !Ref Domain
+
+  # Add the necessary Route53 DNS records for the SES domain identity
+  MyRoute53Records:
+    Type: AWS::Route53::RecordSetGroup
+    Properties:
+      HostedZoneName: !Ref Domain
+      # or HostedZoneId: !Ref MyRoute53Zone
+      RecordSets: !GetAtt MySESDomain.Route53RecordSets
+
+
+Outputs:
+  NameServers:
+    Description: >
+      Create a NS record for your catchall domain with these values.
+    Value: !Join [".\n", !GetAtt MyRoute53Zone.NameServers]
