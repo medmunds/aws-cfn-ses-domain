@@ -16,7 +16,8 @@ Resources:
   CfnSESDomain:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://s3.amazonaws.com/aws-utils.medmunds.com/cfn-ses-domain.cf.yaml
+      # TemplateURL: https://s3.amazonaws.com/YOUR_BUCKET_NAME/cfn-ses-domain.cf.yaml
+      TemplateURL: build/cfn-ses-domain.cf.yaml
 
   # Use Custom::SESDomain to provision a domain identity in SES
   MySESDomain:
@@ -31,24 +32,11 @@ Resources:
       TTL: "600"
       CustomDMARC: '"v=DMARC1; p=quarantine; pct=100; sp=none; aspf=r;"'
 
-  # Create a Route53 zone for your domain
-  # (omit this if your domain is already in Route53)
-  MyRoute53Zone:
-    Type: AWS::Route53::HostedZone
-    Properties:
-      Name: !Ref Domain
-
-  # Add the necessary Route53 DNS records for the SES domain identity
+  # Add the necessary Route 53 DNS records for the SES domain identity.
+  # (This assumes you already have a Route 53 hosted zone for Domain;
+  # if not, add a Type: AWS::Route53::HostedZone resource to create it.)
   MyRoute53Records:
     Type: AWS::Route53::RecordSetGroup
     Properties:
-      HostedZoneName: !Ref Domain
-      # or HostedZoneId: !Ref MyRoute53Zone
+      HostedZoneName: !Sub "${Domain}."
       RecordSets: !GetAtt MySESDomain.Route53RecordSets
-
-
-Outputs:
-  NameServers:
-    Description: >
-      Create a NS record for your catchall domain with these values.
-    Value: !Join [".\n", !GetAtt MyRoute53Zone.NameServers]

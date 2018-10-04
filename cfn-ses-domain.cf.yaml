@@ -45,9 +45,7 @@ Resources:
       Handler: index.lambda_handler
       Role: !GetAtt LambdaExecutionRole.Arn
       Runtime: python3.6
-      Code:
-        ZipFile: |
-          @import index.py
+      Code: cfn_ses_domain
 
 Outputs:
   Name:
