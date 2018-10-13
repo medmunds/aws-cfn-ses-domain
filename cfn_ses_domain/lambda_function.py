@@ -7,7 +7,7 @@ import os
 import boto3
 from botocore.exceptions import BotoCoreError, ClientError
 
-from cfnresponse import FAILED, SUCCESS, send
+from .cfnresponse import FAILED, SUCCESS, send
 
 
 logger = logging.getLogger()

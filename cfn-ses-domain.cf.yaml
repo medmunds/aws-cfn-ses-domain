@@ -45,7 +45,12 @@ Resources:
       Handler: index.lambda_handler
       Role: !GetAtt LambdaExecutionRole.Arn
       Runtime: python3.6
-      Code: cfn_ses_domain
+      Code: build
+      # If you will manually publish the Lambda zipfile to S3,
+      # replace the line above with:
+      #   Code:
+      #     S3Bucket: YOUR_BUCKET_NAME
+      #     S3Key: cfn-ses-domain.lambda.zip
 
 Outputs:
   Name:
