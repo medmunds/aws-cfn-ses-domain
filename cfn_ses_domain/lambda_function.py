@@ -38,7 +38,7 @@ def lambda_handler(event, context):
     # Clean and validate inputs
     try:
         properties["Domain"] = properties["Domain"].strip().rstrip(".")
-    except (TypeError, ValueError):
+    except (AttributeError, TypeError):
         pass
     domain = properties["Domain"]
 
@@ -63,7 +63,7 @@ def lambda_handler(event, context):
 
     # Determine required DNS
     properties.update(outputs)
-    route53_records = generate_route53_records(domain, properties)
+    route53_records = generate_route53_records(properties)
     outputs.update({
         "Domain": domain,
         "Route53RecordSets": route53_records,
@@ -122,7 +122,7 @@ def update_ses_domain_identity(domain, properties):
     return outputs
 
 
-def generate_route53_records(domain, properties):
+def generate_route53_records(properties):
     """Return list of AWS::Route53::RecordSet resources required"""
     records = []
 
