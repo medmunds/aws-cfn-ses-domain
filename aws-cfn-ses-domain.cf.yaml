@@ -50,7 +50,7 @@ Resources:
       # replace the line above with:
       #   Code:
       #     S3Bucket: YOUR_BUCKET_NAME
-      #     S3Key: cfn-ses-domain.lambda.zip
+      #     S3Key: aws-cfn-ses-domain.lambda.zip
 
 Outputs:
   Name:

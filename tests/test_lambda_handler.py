@@ -4,7 +4,7 @@ from unittest.mock import patch, ANY as MOCK_ANY
 from botocore.stub import Stubber
 
 os.environ["AWS_REGION"] = "mock-region"  # (before loading lambda_function)
-from cfn_ses_domain.lambda_function import lambda_handler, ses
+from aws_cfn_ses_domain.lambda_function import lambda_handler, ses
 
 
 mock_context = object()
@@ -19,7 +19,7 @@ class TestLambdaHandler(TestCase):
         self.ses_stubber = Stubber(ses)
         self.ses_stubber.activate()
         self.addCleanup(self.ses_stubber.deactivate)
-        send_patcher = patch('cfn_ses_domain.lambda_function.send')
+        send_patcher = patch('aws_cfn_ses_domain.lambda_function.send')
         self.mock_send = send_patcher.start()
         self.addCleanup(send_patcher.stop)
 

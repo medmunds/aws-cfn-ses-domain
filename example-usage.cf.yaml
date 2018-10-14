@@ -17,7 +17,7 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Properties:
       # TemplateURL: https://s3.amazonaws.com/YOUR_BUCKET_NAME/cfn-ses-domain.cf.yaml
-      TemplateURL: dist/cfn-ses-domain.cf.yaml
+      TemplateURL: dist/aws-cfn-ses-domain.cf.yaml
 
   # Use Custom::SESDomain to provision a domain identity in SES
   MySESDomain:

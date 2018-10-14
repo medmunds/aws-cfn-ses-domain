@@ -9,7 +9,7 @@ PYTHON ?= pipenv run python
 
 DIST_DIR := dist
 BUILD_DIR := build
-SRC_DIR := cfn_ses_domain
+SRC_DIR := aws_cfn_ses_domain
 TESTS_DIR := tests
 
 CF_SOURCES := $(wildcard *.cf.yaml)
@@ -50,8 +50,8 @@ $(BUILD_DIR): $(LAMBDA_SOURCES) | Pipfile Pipfile.lock $(DIST_DIR)
 package: $(CF_PACKAGED)
 
 # Some non-obvious dependencies (resulting from `aws cloudformation package`)
-$(DIST_DIR)/cfn-ses-domain.cf.yaml: $(BUILD_DIR)
-$(DIST_DIR)/example-usage.cf.yaml: $(DIST_DIR)/cfn-ses-domain.cf.yaml
+$(DIST_DIR)/aws-cfn-ses-domain.cf.yaml: $(BUILD_DIR)
+$(DIST_DIR)/example-usage.cf.yaml: $(DIST_DIR)/aws-cfn-ses-domain.cf.yaml
 
 # Rule for packaging CF templates
 $(DIST_DIR)/%.cf.yaml: %.cf.yaml | $(DIST_DIR)
@@ -73,7 +73,7 @@ ifeq ($(DOMAIN), example.com)
 else
 	$(AWS) cloudformation deploy \
 		--template-file "$(DIST_DIR)/example-usage.cf.yaml" \
-		--stack-name example-cfn-ses-domain \
+		--stack-name example-ses-domain \
 		--capabilities CAPABILITY_IAM \
 		--parameter-overrides "Domain=$(DOMAIN)"
 endif
