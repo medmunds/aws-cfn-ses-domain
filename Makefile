@@ -1,4 +1,3 @@
-PACKAGE_NAME := $(shell basename $(CURDIR))
 
 ARTIFACTS_S3_BUCKET ?= aws-utils.medmunds.com
 ARTIFACTS_S3_PREFIX ?= $(PACKAGE_NAME)
@@ -9,13 +8,21 @@ PYTHON ?= pipenv run python
 
 DIST_DIR := dist
 BUILD_DIR := build
-SRC_DIR := aws_cfn_ses_domain
 TESTS_DIR := tests
+
+PACKAGE_NAME := $(shell $(PYTHON) setup.py --name)
+PACKAGE_VERSION := $(shell $(PYTHON) setup.py --version)
 
 CF_SOURCES := $(wildcard *.cf.yaml)
 CF_PACKAGED := $(patsubst %, $(DIST_DIR)/%, $(CF_SOURCES))
-LAMBDA_SOURCES := index.py $(shell find $(SRC_DIR) -name '*.py')
-LAMBDA_ZIP := $(DIST_DIR)/$(PACKAGE_NAME).lambda.zip
+
+# Get the list of source files from `python setup.py egg_info` (run in a temp dir)
+PACKAGE_SOURCES = $(shell EGG_BASE=`mktemp -d` \
+					&& ($(PYTHON) setup.py -q egg_info --egg-base="$$EGG_BASE" \
+						&& grep -v .egg-info "$$EGG_BASE"/*/SOURCES.txt; \
+                	 	rm -rf "$$EGG_BASE"))
+LAMBDA_SOURCES = index.py $(PACKAGE_SOURCES)
+LAMBDA_ZIP := $(DIST_DIR)/$(PACKAGE_NAME)-$(PACKAGE_VERSION).lambda.zip
 
 
 .PHONY: all
@@ -28,19 +35,17 @@ all: lambda package
 .PHONY: lambda
 lambda: $(LAMBDA_ZIP)
 
-$(LAMBDA_ZIP): $(BUILD_DIR)
+$(LAMBDA_ZIP): $(BUILD_DIR) $(DIST_DIR)
+	# Bundling $@ from staged $(BUILD_DIR):
 	rm -f '$@'
 	(cd '$(BUILD_DIR)'; zip -r -9 '$(abspath $@)' .)
 
-$(BUILD_DIR): $(LAMBDA_SOURCES) | Pipfile Pipfile.lock $(DIST_DIR)
+$(BUILD_DIR): $(LAMBDA_SOURCES)
+	# Staging bundle into $@, by installing $(PACKAGE_NAME) (including dependencies):
 	rm -rf '$@'
 	mkdir -p '$@'
-	# Add $(PACKAGE_NAME)...
-	@# FUTURE: pipenv run pip install -t '$@' -e .
-	ls -1 $^ | cpio -p -dumv '$@'
-	# Add dependencies...
-	pipenv lock -r > '$@/requirements.txt'
-	pipenv run pip install --no-deps -t '$(BUILD_DIR)' -r '$@/requirements.txt'
+	pipenv run pip install --no-compile --target '$@' .
+	cp -p index.py '$@'
 
 
 #
