@@ -1,101 +1,220 @@
+#
+# Publishing
+#
+S3_BUCKET = aws-utils.medmunds.com
+S3_PREFIX = cfn-ses-domain
 
-ARTIFACTS_S3_BUCKET ?= aws-utils.medmunds.com
-ARTIFACTS_S3_PREFIX ?= $(PACKAGE_NAME)
-DOMAIN ?= example.com
-
-AWS ?= pipenv run aws
-PYTHON ?= pipenv run python
-
-DIST_DIR := dist
-BUILD_DIR := build
+#
+# Directories
+#
+ARTIFACTS_DIR := publish
+LAMBDA_BUILD_DIR := build-lambda
+PY_BUILD_DIR := build
+PY_DIST_DIR := dist
 TESTS_DIR := tests
 
-PACKAGE_NAME := $(shell $(PYTHON) setup.py --name)
-PACKAGE_VERSION := $(shell $(PYTHON) setup.py --version)
+#
+# Python pipenv and tools
+# - If you want to run without pipenv, use `make PIPENV= target`.
+#   (You'll need all the Python tools listed below installed in
+#   your own activated virtualenv, or globally.)
+PIPENV := pipenv
+PIPENV_RUN := $(if $(strip $(PIPENV)), $(PIPENV) run,)
 
-CF_SOURCES := $(wildcard *.cf.yaml)
-CF_PACKAGED := $(patsubst %, $(DIST_DIR)/%, $(CF_SOURCES))
+AWS := $(PIPENV_RUN) aws
+CFN_LINT := $(PIPENV_RUN) cfn-lint
+PYTHON := $(PIPENV_RUN) python
+PIP := $(PIPENV_RUN) pip
+TWINE := $(PIPENV_RUN) twine
 
-# Get the list of source files from `python setup.py egg_info` (run in a temp dir)
-PACKAGE_SOURCES = $(shell EGG_BASE=`mktemp -d` \
+#
+# Package info
+# (These can be expensive to calculate, so skip for simple targets that won't need them)
+#
+SIMPLE_TARGETS := clean help init
+COMPLEX_GOALS := $(filter-out $(SIMPLE_TARGETS), $(MAKECMDGOALS))
+ifneq ($(strip $(COMPLEX_GOALS)),)
+# at least one goal is not simple...
+
+# Verify pipenv venv exists--otherwise it'll get auto-created without `--dev`
+# by $(PYTHON) (pipenv run python) in later variable defs:
+ifdef PIPENV
+ifneq ($(shell $(PIPENV) --venv >/dev/null 2>&1; echo $$?), 0)
+$(error Pipenv virtualenv does not exist; use `make init` to set it up)
+endif
+endif
+
+# Package metadata
+NAME := $(shell $(PYTHON) setup.py --name)
+VERSION := $(shell $(PYTHON) setup.py --version)
+LAMBDA_ZIP := $(NAME)-$(VERSION).lambda.zip
+S3_LAMBDA_ZIP_KEY := $(if $(S3_PREFIX),$(S3_PREFIX)/,)$(LAMBDA_ZIP)
+
+# CloudFormation template files
+cf_sources := $(wildcard *.cf.yaml)
+cf_packaged := $(patsubst %.cf.yaml, $(ARTIFACTS_DIR)/%-$(VERSION).cf.yaml, $(cf_sources))
+
+# Lambda Package files
+# Faster search for package sources (could be fooled by some Python packaging approaches):
+#package_sources := setup.py $(shell find '$(subst -,_,$(NAME))' -name '*.py')
+# Slower, but accurate, list of source files from `python setup.py egg_info` (run in a temp dir):
+package_sources := $(shell EGG_BASE=`mktemp -d` \
 					&& ($(PYTHON) setup.py -q egg_info --egg-base="$$EGG_BASE" \
 						&& grep -v .egg-info "$$EGG_BASE"/*/SOURCES.txt; \
                 	 	rm -rf "$$EGG_BASE"))
-LAMBDA_SOURCES = index.py $(PACKAGE_SOURCES)
-LAMBDA_ZIP := $(DIST_DIR)/$(PACKAGE_NAME)-$(PACKAGE_VERSION).lambda.zip
+lambda_sources := index.py $(package_sources)
 
+endif  # has COMPLEX_GOALS
+
+#
+# Misc
+#
+
+BOLD := $(shell tput setaf 15)
+RESET := $(shell tput sgr0)
+
+# print a bold heading comment in the output
+# $(call heading, Banner Text [no commas allowed])
+heading = @printf -- '$(BOLD)\# %s$(RESET)\n' '$(strip $1)'
+
+.DEFAULT_GOAL := help
+
+#
+# Goals
+#
 
 .PHONY: all
-all: lambda package
+## Package the Lambda Function and the CloudFormation templates
+all: package template
 
 
 #
-# Lambda zip
+# Lambda Function package
 #
-.PHONY: lambda
-lambda: $(LAMBDA_ZIP)
+.PHONY: package
+## Package the Lambda Function zip file
+package: $(ARTIFACTS_DIR)/$(LAMBDA_ZIP)
 
-$(LAMBDA_ZIP): $(BUILD_DIR) $(DIST_DIR)
-	# Bundling $@ from staged $(BUILD_DIR):
+$(ARTIFACTS_DIR)/$(LAMBDA_ZIP): $(lambda_sources)
+	$(call heading, Stage $(NAME) and requirements into $(LAMBDA_BUILD_DIR))
+	mkdir -p '$(LAMBDA_BUILD_DIR)'
+	$(PIP) install --no-compile --target '$(LAMBDA_BUILD_DIR)' .
+	cp -p index.py '$(LAMBDA_BUILD_DIR)'
+	$(call heading, Package Lambda zip $@ from $(LAMBDA_BUILD_DIR))
+	mkdir -p '$(@D)'
 	rm -f '$@'
-	(cd '$(BUILD_DIR)'; zip -r -9 '$(abspath $@)' .)
-
-$(BUILD_DIR): $(LAMBDA_SOURCES)
-	# Staging bundle into $@, by installing $(PACKAGE_NAME) (including dependencies):
-	rm -rf '$@'
-	mkdir -p '$@'
-	pipenv run pip install --no-compile --target '$@' .
-	cp -p index.py '$@'
+	(cd '$(LAMBDA_BUILD_DIR)'; zip -r -9 '$(abspath $@)' .)
 
 
 #
 # CloudFormation templates, packaged
 #
-.PHONY: package
-package: $(CF_PACKAGED)
-
-# Some non-obvious dependencies (resulting from `aws cloudformation package`)
-$(DIST_DIR)/aws-cfn-ses-domain.cf.yaml: $(BUILD_DIR)
-$(DIST_DIR)/example-usage.cf.yaml: $(DIST_DIR)/aws-cfn-ses-domain.cf.yaml
-
-# Rule for packaging CF templates
-$(DIST_DIR)/%.cf.yaml: %.cf.yaml | $(DIST_DIR)
-	$(AWS) cloudformation package \
-		--template-file '$<' \
-		--s3-bucket '$(ARTIFACTS_S3_BUCKET)' \
-		--s3-prefix '$(ARTIFACTS_S3_PREFIX)' \
-		--output-template-file '$@'
+.PHONY: template
+## Package the CloudFormation templates (for upload to S3_BUCKET)
+template: $(cf_packaged)
 
 
-$(DIST_DIR):
-	@mkdir -p "$(DIST_DIR)"
+# Rule for packaging CloudFormation templates
+$(ARTIFACTS_DIR)/%-$(VERSION).cf.yaml: %.cf.yaml
+	$(call heading, Package CloudFormation template $@)
+	@mkdir -p '$(@D)'
+	sed -e 's=YOUR_BUCKET_NAME=$(S3_BUCKET)=' \
+	  -e 's=YOUR_LAMBDA_ZIP_KEY=$(S3_LAMBDA_ZIP_KEY)=' \
+	  -e 's=LAMBDA_ZIP=$(LAMBDA_ZIP)=' \
+	  '$<' >'$@'
+#	$(AWS) cloudformation package \
+#	  --template-file '$<' \
+#	  --s3-bucket '$(S3_BUCKET)' $(if $(S3_PREFIX),--s3-prefix '$(S3_PREFIX)',) \
+#	  --output-template-file '$@'
 
 
-.PHONY: deploy-example
-deploy-example: $(DIST_DIR)/example-usage.cf.yaml
-ifeq ($(DOMAIN), example.com)
-	@echo 'Set DOMAIN before making this target (`DOMAIN=example.com make $@`)'
+
+.PHONY: upload
+## Upload packaged Lambda zip file and templates to S3_BUCKET
+upload: | all
+	$(AWS) s3 cp --recursive $(ARTIFACTS_DIR)/ \
+	  's3://$(S3_BUCKET)$(if $(S3_PREFIX),/$(S3_PREFIX),)/'
+
+
+.PHONY: deploy
+## Deploy the example CloudFormation stack for DOMAIN
+deploy: $(ARTIFACTS_DIR)/example-usage-$(VERSION).cf.yaml
+ifndef DOMAIN
+	$(error Set DOMAIN to make this target (`make DOMAIN=example.com $@`))
 else
 	$(AWS) cloudformation deploy \
-		--template-file "$(DIST_DIR)/example-usage.cf.yaml" \
-		--stack-name example-ses-domain \
-		--capabilities CAPABILITY_IAM \
-		--parameter-overrides "Domain=$(DOMAIN)"
+	  --template-file '$(ARTIFACTS_DIR)/example-usage-$(VERSION).cf.yaml' \
+	  --stack-name example-ses-domain \
+	  --capabilities CAPABILITY_IAM \
+	  --parameter-overrides \
+	    Domain='$(DOMAIN)' \
+	    CfnSESDomainTemplateURL='https://s3.amazonaws.com/$(S3_BUCKET)/$(S3_LAMBDA_ZIP_KEY)'
 endif
 
 
+.PHONY: init
+## Set up the development environment (using pipenv)
+init:
+ifeq ($(strip $(PIPENV)),)
+	$(error You must manage your own Python virtualenv when PIPENV is disabled)
+else ifeq ($(shell which $(PIPENV)),)
+	$(error Can't find $(PIPENV); see https://pipenv.readthedocs.io/ to install)
+else
+	$(PIPENV) install --dev
+endif
+
+
+.PHONY: release
+## Release this package to PyPI
+release:
+	# TODO
+	# $(PYTHON) setup.py sdist bdist_wheel
+	# git tag -m 'Release $(VERSION)' 'v$(VERSION)'
+	# $(TWINE) upload dist/*
+	# curl -X POST $(ARTIFACTS_DIR) https://gitlab...
+
+
 .PHONY: clean
+## Remove all generated files
 clean:
-	rm -rf '$(DIST_DIR)' '$(BUILD_DIR)'
+	rm -rf '$(ARTIFACTS_DIR)' '$(PY_BUILD_DIR)' '$(PY_DIST_DIR)' '$(LAMBDA_BUILD_DIR)'
 
 
 .PHONY: test
+## Run tests
 test:
 	$(PYTHON) -m unittest discover \
-		--start-directory "$(TESTS_DIR)"
+		--start-directory '$(TESTS_DIR)'
 
 
-.PHONY: lint
-lint: $(CF_SOURCES)
-	@# cfn-lint only allows a single file
-	@echo $^ | xargs -n 1 -t pipenv run cfn-lint
+.PHONY: check
+## Run lint and similar code checks
+check: $(cf_sources)
+	$(PIPENV) check --style
+	@# (cfn-lint only handles a single file at once)
+	@echo $^ | xargs -n 1 -t $(CFN_LINT)
+
+
+#
+# Help
+# Adapted from https://gist.github.com/prwhite/8168133#gistcomment-2278355
+#
+TARGET_COL_WIDTH := 10
+
+.PHONY: help
+## Show this usage info
+help:
+	@echo ''
+	@echo '$(BOLD)USAGE$(RESET)'
+	@echo '  $(BOLD)make$(RESET) [ VARIABLE=value ... ] target ...'
+	@echo ''
+	@echo '$(BOLD)TARGETS$(RESET)'
+	@awk '/^[a-zA-Z\-\_0-9]+:/ { \
+		description = match(lastLine, /^## (.*)/); \
+		if (description) { \
+			target = $$1; sub(/:$$/, "", target); \
+			description = substr(lastLine, RSTART + 3, RLENGTH); \
+			printf "  $(BOLD)%-$(TARGET_COL_WIDTH)s$(RESET) %s\n", target, description; \
+		} \
+	} \
+	{ lastLine = $$0 }' $(MAKEFILE_LIST)

@@ -5,6 +5,28 @@ Description: >
   to provision and verify an Amazon SES domain identity for sending and/or receiving
   email. (See the readme for more information.)
 
+Parameters:
+  LambdaCodeS3Bucket:
+    Type: String
+    Default: YOUR_BUCKET_NAME
+    Description: >
+      The S3 bucket where the LAMBDA_ZIP deployment package
+      has been uploaded. Must reside in the same AWS Region where your stack
+      will be provisioning SES domains.
+  LambdaCodeS3Key:
+    Type: String
+    Default: YOUR_LAMBDA_ZIP_KEY
+    Description: >
+      The S3 key to the LAMBDA_ZIP deployment package.
+
+Outputs:
+  Arn:
+    Description: The ServiceToken for the Custom::SES_Domain resource
+    Value: !GetAtt LambdaFunction.Arn
+  Name:
+    Description: The AWS::Lambda::Function that implements Custom::SES_Domain
+    Value: !Ref LambdaFunction
+
 Resources:
   LambdaExecutionRole:
     Type: AWS::IAM::Role
@@ -45,17 +67,6 @@ Resources:
       Handler: index.lambda_handler
       Role: !GetAtt LambdaExecutionRole.Arn
       Runtime: python3.6
-      Code: build
-      # If you will manually publish the Lambda zipfile to S3,
-      # replace the line above with:
-      #   Code:
-      #     S3Bucket: YOUR_BUCKET_NAME
-      #     S3Key: aws-cfn-ses-domain.lambda.zip
-
-Outputs:
-  Name:
-    Description: An AWS::CloudFormation::CustomResource LambdaFunction
-    Value: !Ref LambdaFunction
-  Arn:
-    Description: An AWS::CloudFormation::CustomResource LambdaFunction
-    Value: !GetAtt LambdaFunction.Arn
+      Code:
+        S3Bucket: !Ref LambdaCodeS3Bucket
+        S3Key: !Ref LambdaCodeS3Key

@@ -1,27 +1,31 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
 Description: >
-  Example using cfn-ses-domain custom CloudFormation type to provision
+  Example using the Custom::SES_Domain CloudFormation custom resource type to provision
   an Amazon SES domain identity and maintain necessary DNS records in Route53
 
 Parameters:
   Domain:
     Type: String
     Description: >
-      The domain name you want to provision (e.g., "corp.example.com").
+      The domain name you want to provision for Amazon SES (e.g., "corp.example.com").
+  CfnSESDomainTemplateURL:
+    Type: String
+    Description: >
+      The S3 url where you have uploaded your copy of aws-cfn-ses-domain.cf.yaml.
+    Default: https://s3.amazonaws.com/YOUR_BUCKET_NAME/YOUR_LAMBDA_ZIP_KEY
 
 Resources:
-  # Use a nested stack to create the AWS Lambda Function for the Custom::SESDomain type.
+  # Use a nested stack to create the AWS Lambda Function for the Custom::SES_Domain type.
   # This stack's "Arn" output is what you'll need for the custom resource's ServiceToken.
   CfnSESDomain:
     Type: AWS::CloudFormation::Stack
     Properties:
-      # TemplateURL: https://s3.amazonaws.com/YOUR_BUCKET_NAME/cfn-ses-domain.cf.yaml
-      TemplateURL: dist/aws-cfn-ses-domain.cf.yaml
+      TemplateURL: !Ref CfnSESDomainTemplateURL
 
-  # Use Custom::SESDomain to provision a domain identity in SES
+  # Use Custom::SES_Domain to provision a domain identity in SES
   MySESDomain:
-    Type: Custom::SESDomain
+    Type: Custom::SES_Domain
     Properties:
       ServiceToken: !GetAtt CfnSESDomain.Outputs.Arn
       # Domain is required; all others are optional
@@ -29,8 +33,8 @@ Resources:
       EnableReceive: true
       EnableSend: true
       MailFromSubdomain: "mail"
-      TTL: "600"
-      CustomDMARC: '"v=DMARC1; p=quarantine; pct=100; sp=none; aspf=r;"'
+      TTL: "1800"
+      CustomDMARC: '"v=DMARC1; p=none; pct=100; sp=none; aspf=r;"'
 
   # Add the necessary Route 53 DNS records for the SES domain identity.
   # (This assumes you already have a Route 53 hosted zone for Domain;
