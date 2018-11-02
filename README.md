@@ -372,15 +372,26 @@ may be helpful for generating custom DNS records or other purposes:
 
 ## Development
 
-(TODO)
+Development requires GNU Make (standard on most Linux-like systems) and [pipenv][].
+(Pipenv is used only to manage the development environment; package requirements are
+tracked in `setup.py`.)
 
-* pipenv
-* GNU Make
+To set up your development environment, clone the repository and then run `make init`.
+(This just runs `pipenv install --dev`.)
 
-* build
-* test
-* package
-* release (to PyPI; to GitLab)
+To see a list of available make targets, run `make help`.
+
+To package and upload your own version of the Lambda zip package and the templates,
+run `make S3_BUCKET=your_bucket_name upload`. If you just want to build locally
+without uploading to S3, run `make S3_BUCKET=your_bucket_name all`. You can also
+include `S3_PREFIX=your/s3/prefix` or `S3_PREFIX=` in either of these commands,
+if desired.
+
+If you are changing code, you will want to run tests (`make test`) and static code
+checks (`make check`) before uploading.
+
+Additional development customization variables are documented near the top 
+of the Makefile.
 
 
 ## Alternatives
@@ -431,6 +442,8 @@ standard in CloudFormation. Please consider adopting or obsoleting this package.
   https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-route53-recordset.html
 [RecordSetGroup]: 
   https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-route53-recordsetgroup.html
+[pipenv]:
+  https://pipenv.readthedocs.io/
 [releases]: 
   https://gitlab.com/medmunds/aws-cfn-ses-domain/tags
 [ses-smtp-endpoints]: 
