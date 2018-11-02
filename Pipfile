@@ -12,6 +12,7 @@ awscli = "*"
 boto3 = "*"
 botocore = "*"
 cfn-lint = "*"
+python-gitlab = "*"
 
 [requires]
 python_version = "3.6"

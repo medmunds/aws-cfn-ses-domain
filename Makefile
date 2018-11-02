@@ -3,6 +3,7 @@
 #
 S3_BUCKET = aws-utils.medmunds.com
 S3_PREFIX = cfn-ses-domain
+GITLAB_PROJECT_ID := medmunds/aws-cfn-ses-domain
 
 #
 # Directories
@@ -49,6 +50,7 @@ NAME := $(shell $(PYTHON) setup.py --name)
 VERSION := $(shell $(PYTHON) setup.py --version)
 LAMBDA_ZIP := $(NAME)-$(VERSION).lambda.zip
 S3_LAMBDA_ZIP_KEY := $(if $(S3_PREFIX),$(S3_PREFIX)/,)$(LAMBDA_ZIP)
+lambda_packaged := $(ARTIFACTS_DIR)/$(LAMBDA_ZIP)
 
 # CloudFormation template files
 cf_sources := $(wildcard *.cf.yaml)
@@ -93,10 +95,11 @@ all: package template
 #
 .PHONY: package
 ## Package the Lambda Function zip file
-package: $(ARTIFACTS_DIR)/$(LAMBDA_ZIP)
+package: $(lambda_packaged)
 
-$(ARTIFACTS_DIR)/$(LAMBDA_ZIP): $(lambda_sources)
+$(lambda_packaged): $(lambda_sources)
 	$(call heading, Stage $(NAME) and requirements into $(LAMBDA_BUILD_DIR))
+	rm -rf '$(LAMBDA_BUILD_DIR)'  # always start clean
 	mkdir -p '$(LAMBDA_BUILD_DIR)'
 	$(PIP) install --no-compile --target '$(LAMBDA_BUILD_DIR)' .
 	cp -p index.py '$(LAMBDA_BUILD_DIR)'
@@ -165,13 +168,28 @@ endif
 
 
 .PHONY: release
-## Release this package to PyPI
-release:
-	# TODO
-	# $(PYTHON) setup.py sdist bdist_wheel
-	# git tag -m 'Release $(VERSION)' 'v$(VERSION)'
-	# $(TWINE) upload dist/*
-	# curl -X POST $(ARTIFACTS_DIR) https://gitlab...
+## Release this package to GitLab and PyPI
+release: release-gitlab release-pypi
+
+
+.PHONY: release-pypi
+release-pypi:
+	$(call heading, Releasing $(VERSION) to PyPI)
+	rm -rf $(PY_DIST_DIR)  # always start clean
+	$(PYTHON) setup.py --dist-dir '$(PY_DIST_DIR)' sdist bdist_wheel
+	$(TWINE) upload $(PY_DIST_DIR)/*
+
+
+.PHONY: release-gitlab
+release-gitlab: $(cf_packaged) $(lambda_packaged)
+	$(call heading, Releasing v$(VERSION) to GitLab $(GITLAB_PROJECT_ID))
+	git tag -m 'Release $(VERSION)' 'v$(VERSION)'
+	git push --tags
+	$(PYTHON) release-gitlab.py \
+	  --id '$(GITLAB_PROJECT_ID)' \
+	  --name 'v$(VERSION)' \
+	  --description '{artifacts}' \
+	  --artifacts $^
 
 
 .PHONY: clean
