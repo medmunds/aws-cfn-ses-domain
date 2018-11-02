@@ -1,18 +1,22 @@
+# This project uses pipenv only to manage the development environment.
+# Actual package dependencies are tracked in setup.py.
+
 [[source]]
 url = "https://pypi.org/simple"
 verify_ssl = true
 name = "pypi"
 
 [packages]
-
-[dev-packages]
-# boto3 included in Lambda Execution Environment
-# https://docs.aws.amazon.com/lambda/latest/dg/current-supported-versions.html
+# Packages required for custom builds and testing
 awscli = "*"
 boto3 = "*"
 botocore = "*"
 cfn-lint = "*"
+
+[dev-packages]
+# Additional packages required for maintaining/releasing this project
 python-gitlab = "*"
+twine = "*"
 
 [requires]
 python_version = "3.6"

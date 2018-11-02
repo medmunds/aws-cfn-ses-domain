@@ -163,7 +163,7 @@ ifeq ($(strip $(PIPENV)),)
 else ifeq ($(shell which $(PIPENV)),)
 	$(error Can't find $(PIPENV); see https://pipenv.readthedocs.io/ to install)
 else
-	$(PIPENV) install --dev
+	$(PIPENV) install
 endif
 
 

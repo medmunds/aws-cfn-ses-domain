@@ -377,13 +377,14 @@ Development requires GNU Make (standard on most Linux-like systems) and [pipenv]
 tracked in `setup.py`.)
 
 To set up your development environment, clone the repository and then run `make init`.
-(This just runs `pipenv install --dev`.)
+(This just runs `pipenv install`. If you are a package maintainer who will release
+to PyPI, use `pipenv install --dev` instead.)
 
 To see a list of available make targets, run `make help`.
 
-To package and upload your own version of the Lambda zip package and the templates,
-run `make S3_BUCKET=your_bucket_name upload`. If you just want to build locally
-without uploading to S3, run `make S3_BUCKET=your_bucket_name all`. You can also
+To package and upload your own version of the Lambda zip package and the CloudFormation
+templates, run `make S3_BUCKET=your_bucket_name upload`. If you just want to build 
+locally without uploading to S3, run `make S3_BUCKET=your_bucket_name all`. You can also
 include `S3_PREFIX=your/s3/prefix` or `S3_PREFIX=` in either of these commands,
 if desired.
 
