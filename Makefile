@@ -176,7 +176,9 @@ release: release-gitlab release-pypi
 release-pypi:
 	$(call heading, Releasing $(VERSION) to PyPI)
 	rm -rf $(PY_DIST_DIR)  # always start clean
-	$(PYTHON) setup.py --dist-dir '$(PY_DIST_DIR)' sdist bdist_wheel
+	$(PYTHON) setup.py \
+	  sdist --dist-dir '$(PY_DIST_DIR)' \
+	  bdist_wheel --dist-dir '$(PY_DIST_DIR)'
 	$(TWINE) upload $(PY_DIST_DIR)/*
 
 
