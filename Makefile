@@ -123,6 +123,7 @@ $(ARTIFACTS_DIR)/%-$(VERSION).cf.yaml: %.cf.yaml
 	@mkdir -p '$(@D)'
 	sed -e 's=YOUR_BUCKET_NAME=$(S3_BUCKET)=' \
 	  -e 's=YOUR_LAMBDA_ZIP_KEY=$(S3_LAMBDA_ZIP_KEY)=' \
+	  -e 's=aws-cfn-ses-domain-VERSION.cf.yaml=$(if $(S3_PREFIX),$(S3_PREFIX)/,)aws-cfn-ses-domain-$(VERSION).cf.yaml=' \
 	  -e 's=LAMBDA_ZIP=$(LAMBDA_ZIP)=' \
 	  '$<' >'$@'
 #	$(AWS) cloudformation package \

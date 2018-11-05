@@ -13,7 +13,7 @@ Parameters:
     Type: String
     Description: >
       The S3 url where you have uploaded your copy of aws-cfn-ses-domain.cf.yaml.
-    Default: https://s3.amazonaws.com/YOUR_BUCKET_NAME/YOUR_LAMBDA_ZIP_KEY
+    Default: https://s3.amazonaws.com/YOUR_BUCKET_NAME/aws-cfn-ses-domain-VERSION.cf.yaml
 
 Resources:
   # Use a nested stack to create the AWS Lambda Function for the Custom::SES_Domain type.
