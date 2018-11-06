@@ -212,8 +212,7 @@ test:
 ## Run lint and similar code checks
 check: $(cf_sources)
 	$(PIPENV) check --style
-	@# (cfn-lint only handles a single file at once)
-	@echo $^ | xargs -n 1 -t $(CFN_LINT)
+	$(CFN_LINT) --override-spec CustomSESDomainSpecification.json $^
 
 
 #

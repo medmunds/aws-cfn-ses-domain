@@ -1,0 +1,93 @@
+{
+  "ResourceTypes": {
+    "Custom::SES_Domain": {
+      "Documentation": "https://gitlab.com/medmunds/aws-cfn-ses-domain/blob/master/README.md",
+      "Properties": {
+        "ServiceToken": {
+          "Documentation": "https://gitlab.com/medmunds/aws-cfn-ses-domain/blob/master/README.md#servicetoken",
+          "PrimitiveType": "String",
+          "Required": true,
+          "UpdateType": "Immutable"
+        },
+        "Domain": {
+          "Documentation": "https://gitlab.com/medmunds/aws-cfn-ses-domain/blob/master/README.md#domain",
+          "PrimitiveType": "String",
+          "Required": true,
+          "UpdateType": "Immutable"
+        },
+        "EnableSend": {
+          "Documentation": "https://gitlab.com/medmunds/aws-cfn-ses-domain/blob/master/README.md#enablesend",
+          "PrimitiveType": "Boolean",
+          "Required": false,
+          "UpdateType": "Mutable"
+        },
+        "EnableReceive": {
+          "Documentation": "https://gitlab.com/medmunds/aws-cfn-ses-domain/blob/master/README.md#enablereceive",
+          "PrimitiveType": "Boolean",
+          "Required": false,
+          "UpdateType": "Mutable"
+        },
+        "MailFromSubdomain": {
+          "Documentation": "https://gitlab.com/medmunds/aws-cfn-ses-domain/blob/master/README.md#mailfromsubdomain",
+          "PrimitiveType": "String",
+          "Required": false,
+          "UpdateType": "Mutable"
+        },
+        "CustomDMARC": {
+          "Documentation": "https://gitlab.com/medmunds/aws-cfn-ses-domain/blob/master/README.md#customdmarc",
+          "PrimitiveType": "String",
+          "Required": false,
+          "UpdateType": "Mutable"
+        },
+        "TTL": {
+          "Documentation": "https://gitlab.com/medmunds/aws-cfn-ses-domain/blob/master/README.md#ttl",
+          "PrimitiveType": "String",
+          "Required": false,
+          "UpdateType": "Mutable"
+        },
+        "Region": {
+          "Documentation": "https://gitlab.com/medmunds/aws-cfn-ses-domain/blob/master/README.md#region",
+          "PrimitiveType": "String",
+          "Required": false,
+          "UpdateType": "Mutable"
+        }
+      },
+      "Attributes": {
+        "Route53RecordSets": {
+          "ItemType": "AWS::Route53::RecordSetGroup.RecordSet",
+          "Type": "List"
+        },
+        "ZoneFileEntries": {
+          "PrimitiveItemType": "String",
+          "Type": "List"
+        },
+        "Domain": {
+          "PrimitiveType": "String"
+        },
+        "VerificationToken": {
+          "PrimitiveType": "String"
+        },
+        "DkimTokens": {
+          "PrimitiveItemType": "String",
+          "Type": "List"
+        },
+        "MailFromDomain": {
+          "PrimitiveType": "String"
+        },
+        "MailFromMX": {
+          "PrimitiveType": "String"
+        },
+        "MailFromSPF": {
+          "PrimitiveType": "String"
+        },
+        "DMARC": {
+          "PrimitiveType": "String"
+        },
+        "ReceiveMX": {
+          "PrimitiveType": "String"
+        }
+      }
+    }
+  },
+  "ResourceSpecificationVersion": "2.11.0"
+}
