@@ -19,6 +19,16 @@ As an added benefit, this approach lets CloudFormation determine the optimal DNS
 updating strategy if you change your stack (e.g., to add inbound capability to an 
 SES domain originally provisioned for sending only).
 
+**Documentation**
+
+* [Installation](#installation)
+* [Usage](#usage)
+  * [Properties](#properties)
+  * [Return Values](#return-values)
+* [Development](#development)
+* [Alternatives](#alternatives)
+* [Future](#future)
+
 
 ## Installation
 
