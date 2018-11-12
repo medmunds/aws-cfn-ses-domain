@@ -11,7 +11,7 @@ name = "pypi"
 awscli = "*"
 boto3 = "*"
 botocore = "*"
-cfn-lint = "*"
+cfn-lint = ">=0.9.0"
 
 [dev-packages]
 # Additional packages required for maintaining/releasing this project

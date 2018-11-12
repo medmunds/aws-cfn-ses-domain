@@ -25,6 +25,7 @@ SES domain originally provisioned for sending only).
 * [Usage](#usage)
   * [Properties](#properties)
   * [Return Values](#return-values)
+  * [Validating Your Templates](#validating-your-templates)
 * [Development](#development)
 * [Alternatives](#alternatives)
 * [Future](#future)
@@ -309,9 +310,6 @@ This is suitable for use as the `RecordSets` property of an
       RecordSets: !GetAtt MySESDomain.Route53RecordSets
 ```
 
-(Note that cfn-lint will erroneously report "E3002 Property is an object instead of List"
-on the RecordSets line. This warning can safely be ignored.)
-
 If you update a `Custom::SES_Domain` resource, the `Route53RecordSets` attribute 
 will change accordingly, and CloudFormation will figure out the precise updates 
 needed to the Route 53 records.
@@ -379,6 +377,20 @@ may be helpful for generating custom DNS records or other purposes:
   (not available if [`EnableReceive`](#enablereceive) is false) 
 
 
+### Validating Your Templates
+
+If you use [cfn-lint][] (recommended!) to check your CloudFormation templates,
+you can include an "override spec" so your `Custom::SES_Domain` properties and 
+attributes will be validated. Download a copy of 
+[CustomSESDomainSpecification.json](CustomSESDomainSpecification.json) and then:
+
+```bash
+cfn-lint --override-spec CustomSESDomainSpecification.json YOUR-TEMPLATE.cf.yaml
+``` 
+
+(Without the override-spec, cfn-lint will allow *any* properties and values for
+`Custom::SES_Domain` resources.)
+
 
 ## Development
 
@@ -435,6 +447,8 @@ standard in CloudFormation. Please consider adopting or obsoleting this package.
 (Just reach out if you'd like me to assign or transfer it.)
 
 
+[cfn-lint]:
+  https://github.com/awslabs/cfn-python-lint
 [CloudFormation]:
   https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/Welcome.html
 [custom-mail-from-domain]: 
