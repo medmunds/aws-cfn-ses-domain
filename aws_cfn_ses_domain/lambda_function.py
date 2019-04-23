@@ -153,7 +153,7 @@ def generate_route53_records(properties):
 
     if properties.get("DMARC"):
         records.append({
-            "Name": "{Domain}.".format(**properties),
+            "Name": "_dmarc.{Domain}.".format(**properties),
             "Type": "TXT",
             "ResourceRecords": [properties["DMARC"]]})
 

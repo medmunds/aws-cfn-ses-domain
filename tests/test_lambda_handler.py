@@ -95,7 +95,7 @@ class TestLambdaHandler(TestCase):
              'ResourceRecords': ['10 feedback-smtp.mock-region.amazonses.com.']},
             {'Type': 'TXT', 'Name': 'mail.example.com.', 'TTL': '1800',
              'ResourceRecords': ['"v=spf1 include:amazonses.com -all"']},
-            {'Type': 'TXT', 'Name': 'example.com.', 'TTL': '1800',
+            {'Type': 'TXT', 'Name': '_dmarc.example.com.', 'TTL': '1800',
              'ResourceRecords': ['"v=DMARC1; p=none; pct=100; sp=none; aspf=r;"']},
         ])
         self.assertCountEqual(outputs["ZoneFileEntries"], [
@@ -104,7 +104,7 @@ class TestLambdaHandler(TestCase):
             'DKIM_TOKEN_2._domainkey.example.com.\t1800\tIN\tCNAME\tDKIM_TOKEN_2.dkim.amazonses.com.',
             'mail.example.com.                   \t1800\tIN\tMX   \t10 feedback-smtp.mock-region.amazonses.com.',
             'mail.example.com.                   \t1800\tIN\tTXT  \t"v=spf1 include:amazonses.com -all"',
-            'example.com.                        \t1800\tIN\tTXT  \t"v=DMARC1; p=none; pct=100; sp=none; aspf=r;"',
+            '_dmarc.example.com.                 \t1800\tIN\tTXT  \t"v=DMARC1; p=none; pct=100; sp=none; aspf=r;"',
         ])
 
     def test_create_all_options(self):
@@ -153,7 +153,7 @@ class TestLambdaHandler(TestCase):
              'ResourceRecords': ['10 feedback-smtp.us-test-2.amazonses.com.']},
             {'Type': 'TXT', 'Name': 'bounce.example.com.', 'TTL': '300',
              'ResourceRecords': ['"v=spf1 include:amazonses.com -all"']},
-            {'Type': 'TXT', 'Name': 'example.com.', 'TTL': '300',
+            {'Type': 'TXT', 'Name': '_dmarc.example.com.', 'TTL': '300',
              'ResourceRecords': ['"v=DMARC1; p=quarantine; rua=mailto:d@example.com;"']},
             {'Type': 'MX', 'Name': 'example.com.', 'TTL': '300',
              'ResourceRecords': ['10 inbound-smtp.us-test-2.amazonaws.com.']}
@@ -164,7 +164,7 @@ class TestLambdaHandler(TestCase):
             'DKIM_TOKEN_2._domainkey.example.com.\t300\tIN\tCNAME\tDKIM_TOKEN_2.dkim.amazonses.com.',
             'bounce.example.com.                 \t300\tIN\tMX   \t10 feedback-smtp.us-test-2.amazonses.com.',
             'bounce.example.com.                 \t300\tIN\tTXT  \t"v=spf1 include:amazonses.com -all"',
-            'example.com.                        \t300\tIN\tTXT  \t"v=DMARC1; p=quarantine; rua=mailto:d@example.com;"',
+            '_dmarc.example.com.                 \t300\tIN\tTXT  \t"v=DMARC1; p=quarantine; rua=mailto:d@example.com;"',
             'example.com.                        \t300\tIN\tMX   \t10 inbound-smtp.us-test-2.amazonaws.com.',
         ])
 

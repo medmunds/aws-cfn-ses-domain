@@ -330,7 +330,7 @@ Example:
   'klmno3._domainkey.example.com.  1800  IN  CNAME  klmno3.dkim.amazonses.com.',
   'mail.example.com.               1800  IN  MX     10 feedback-smtp.us-west-1.amazonses.com.',
   'mail.example.com.               1800  IN  TXT    "v=spf1 include:amazonses.com -all"',
-  'example.com.                    1800  IN  TXT    "v=DMARC1; p=none; pct=100; sp=none; aspf=r;"',
+  '_dmarc.example.com.             1800  IN  TXT    "v=DMARC1; p=none; pct=100; sp=none; aspf=r;"',
   'example.com.                    1800  IN  MX     10 inbound-smtp.us-west-1.amazonaws.com.'
 ]
 ```
