@@ -1,14 +1,14 @@
 import os
+import boto3
 from unittest import TestCase
 from unittest.mock import patch, ANY as MOCK_ANY
 from botocore.stub import Stubber
 
 os.environ["AWS_REGION"] = "mock-region"  # (before loading lambda_function)
-from aws_cfn_ses_domain.lambda_function import lambda_handler, ses
+from aws_cfn_ses_domain.lambda_function import create_ses_domain
 
-
+ses = boto3.client('ses')
 mock_context = object()
-
 
 class TestLambdaHandler(TestCase):
     # Use botocore.stub.Stubber to simulate AWS responses
@@ -37,7 +37,7 @@ class TestLambdaHandler(TestCase):
         event = {
             "RequestType": "Create",
             "ResourceProperties": {}}
-        lambda_handler(event, mock_context)
+        create_ses_domain(ses, event, mock_context)
         self.assertLambdaResponse(
             event, status="FAILED",
             reason="The 'Domain' property is required.",
@@ -49,7 +49,7 @@ class TestLambdaHandler(TestCase):
             "ResourceProperties": {
                 "Domain": " . ",
             }}
-        lambda_handler(event, mock_context)
+        create_ses_domain(ses, event, mock_context)
         self.assertLambdaResponse(
             event, status="FAILED",
             reason="The 'Domain' property is required.",
@@ -73,7 +73,7 @@ class TestLambdaHandler(TestCase):
             'set_identity_mail_from_domain',
             {},
             {'Identity': "example.com", 'MailFromDomain': "mail.example.com"})
-        lambda_handler(event, mock_context)
+        create_ses_domain(ses, event, mock_context)
 
         outputs = self.assertLambdaResponse(event, physical_resource_id="example.com")
         self.assertEqual(outputs["Domain"], "example.com")
@@ -131,7 +131,7 @@ class TestLambdaHandler(TestCase):
             'set_identity_mail_from_domain',
             {},
             {'Identity': "example.com", 'MailFromDomain': "bounce.example.com"})
-        lambda_handler(event, mock_context)
+        create_ses_domain(ses, event, mock_context)
 
         outputs = self.assertLambdaResponse(event, physical_resource_id="example.com")
         self.assertEqual(outputs["Domain"], "example.com")
@@ -185,7 +185,7 @@ class TestLambdaHandler(TestCase):
             'set_identity_mail_from_domain',
             {},
             {'Identity': "example.com", 'MailFromDomain': ""})
-        lambda_handler(event, mock_context)
+        create_ses_domain(ses, event, mock_context)
 
         outputs = self.assertLambdaResponse(event, physical_resource_id="example.com")
         self.assertEqual(outputs["Domain"], "example.com")
@@ -223,7 +223,7 @@ class TestLambdaHandler(TestCase):
             'set_identity_mail_from_domain',
             {},
             {'Identity': "example.com", 'MailFromDomain': ""})
-        lambda_handler(event, mock_context)
+        create_ses_domain(ses, event, mock_context)
 
         outputs = self.assertLambdaResponse(event, physical_resource_id="example.com")
         self.assertEqual(outputs["Domain"], "example.com")
@@ -249,7 +249,7 @@ class TestLambdaHandler(TestCase):
             "Invalid domain name bad domain name.",
             expected_params={'Domain': "bad domain name"})
         with self.assertLogs(level="ERROR") as cm:
-            lambda_handler(event, mock_context)
+            create_ses_domain(ses, event, mock_context)
         self.assertLambdaResponse(
             event, status="FAILED",
             reason="An error occurred (InvalidParameterValue) when calling the"

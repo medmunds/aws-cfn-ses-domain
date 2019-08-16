@@ -24,11 +24,13 @@ DEFAULT_PROPERTIES = {
     "Region": os.getenv("AWS_REGION"),
 }
 
-
-ses = boto3.client('ses')
-
-
 def lambda_handler(event, context):
+    region = event["ResourceProperties"]["Region"] or os.getenv("AWS_REGION")
+
+    ses = boto3.client('ses', region_name=region)
+    create_ses_domain(ses, event, context)
+
+def create_ses_domain(ses, event, context):
     logger.info("Received event %r", event)
 
     properties = DEFAULT_PROPERTIES.copy()
@@ -54,7 +56,7 @@ def lambda_handler(event, context):
 
     # Update SES
     try:
-        outputs = update_ses_domain_identity(domain, properties)
+        outputs = update_ses_domain_identity(ses, domain, properties)
     except (BotoCoreError, ClientError) as error:
         # for ClientError, might be helpful to look at error.response, too
         logger.exception("Error updating SES: %s", error)
@@ -74,7 +76,7 @@ def lambda_handler(event, context):
                 response_data=outputs, physical_resource_id=domain)
 
 
-def update_ses_domain_identity(domain, properties):
+def update_ses_domain_identity(ses, domain, properties):
     """Handle SES (de-)provisioning for domain and returns dict of output info"""
     outputs = {}
     enable_send = properties["EnableSend"]
