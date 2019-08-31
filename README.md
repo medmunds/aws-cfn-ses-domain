@@ -54,8 +54,8 @@ The easiest way to do this is with a CloudFormation [nested stack][NestedStack]:
     Properties:
       TemplateURL: https://s3.amazonaws.com/YOUR_BUCKET/aws-cfn-ses-domain-VERSION.cf.yaml
       Parameters:
-      - LambdaCodeS3Bucket: YOUR_BUCKET
-      - LambdaCodeS3Key: aws-cfn-ses-domain-VERSION.lambda.zip
+        LambdaCodeS3Bucket: YOUR_BUCKET
+        LambdaCodeS3Key: aws-cfn-ses-domain-VERSION.lambda.zip
 ```
 
 The `Custom::SES_Domain` resource type is now available to use like this (see 
@@ -103,8 +103,8 @@ Resources:
     Properties:
       TemplateURL: https://s3.amazonaws.com/YOUR_BUCKET/aws-cfn-ses-domain-VERSION.cf.yaml
       Parameters:
-      - LambdaCodeS3Bucket: YOUR_BUCKET
-      - LambdaCodeS3Key: aws-cfn-ses-domain-VERSION.lambda.zip
+        LambdaCodeS3Bucket: YOUR_BUCKET
+        LambdaCodeS3Key: aws-cfn-ses-domain-VERSION.lambda.zip
 
   # 2. Declare a Custom::SES_Domain resource for your SES domain.
   MySESDomain:
