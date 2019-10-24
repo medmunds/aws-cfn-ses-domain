@@ -1,10 +1,11 @@
 import os
+import boto3
 from unittest import TestCase
 from unittest.mock import patch, ANY as MOCK_ANY
 from botocore.stub import Stubber
 
 os.environ["AWS_REGION"] = "mock-region"  # (before loading lambda_function)
-from aws_cfn_ses_domain.lambda_function import lambda_handler, ses
+from aws_cfn_ses_domain.lambda_function import lambda_handler
 
 
 mock_context = object()
@@ -16,6 +17,10 @@ class TestLambdaHandler(TestCase):
     maxDiff = None
 
     def setUp(self):
+        ses = boto3.client('ses')  # need a real client for Stubber
+        boto3_client_patcher = patch('aws_cfn_ses_domain.lambda_function.boto3.client', return_value=ses)
+        self.mock_boto3_client = boto3_client_patcher.start()
+        self.addCleanup(boto3_client_patcher.stop)
         self.ses_stubber = Stubber(ses)
         self.ses_stubber.activate()
         self.addCleanup(self.ses_stubber.deactivate)

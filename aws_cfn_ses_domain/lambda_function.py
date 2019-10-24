@@ -25,8 +25,6 @@ DEFAULT_PROPERTIES = {
 }
 
 
-ses = boto3.client('ses')
-
 
 def lambda_handler(event, context):
     logger.info("Received event %r", event)
@@ -75,6 +73,8 @@ def lambda_handler(event, context):
 
 
 def update_ses_domain_identity(domain, properties):
+    ses = boto3.client('ses', region_name=properties['Region'])
+
     """Handle SES (de-)provisioning for domain and returns dict of output info"""
     outputs = {}
     enable_send = properties["EnableSend"]
