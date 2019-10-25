@@ -242,6 +242,34 @@ class TestLambdaHandler(TestCase):
         self.assertEqual(outputs["Route53RecordSets"], [])
         self.assertEqual(outputs["ZoneFileEntries"], [])
 
+    def test_verify_email(self):
+        event = {
+            "RequestType": "Create",
+            "ResourceProperties": {
+                "Domain": "example.com.",
+                "EmailAddress": "foo@biz.com"
+            }}
+        self.ses_stubber.add_response(
+            'verify_domain_identity',
+            {'VerificationToken': "ID_TOKEN"},
+            {'Domain': "example.com"})
+        self.ses_stubber.add_response(
+            'verify_domain_dkim',
+            {'DkimTokens': ["DKIM_TOKEN_1", "DKIM_TOKEN_2"]},
+            {'Domain': "example.com"})
+        self.ses_stubber.add_response(
+            'set_identity_mail_from_domain',
+            {},
+            {'Identity': "example.com", 'MailFromDomain': "mail.example.com"})
+        self.ses_stubber.add_response(
+            'verify_email_identity',
+            {},
+            {'EmailAddress': "foo@biz.com"})
+        lambda_handler(event, mock_context)
+
+        outputs = self.assertLambdaResponse(event, physical_resource_id="example.com")
+        self.assertEqual(outputs["EmailAddress"], "foo@biz.com")
+
     def test_boto_error(self):
         event = {
             "RequestType": "Create",

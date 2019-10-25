@@ -39,6 +39,7 @@ def lambda_handler(event, context):
     except (AttributeError, TypeError):
         pass
     domain = properties["Domain"]
+    email = properties.get("EmailAddress")
 
     if not domain:
         return send(event, context, FAILED,
@@ -58,6 +59,19 @@ def lambda_handler(event, context):
         logger.exception("Error updating SES: %s", error)
         return send(event, context, FAILED,
                     reason=str(error), physical_resource_id=domain)
+
+    if email:
+        try:
+            update_ses_email_identity(email, properties)
+
+            outputs.update({
+                "EmailAddress": email
+            })
+        except (BotoCoreError, ClientError) as error:
+            # for ClientError, might be helpful to look at error.response, too
+            logger.exception("Error updating SES: %s", error)
+            return send(event, context, FAILED,
+                        reason=str(error), physical_resource_id=domain)
 
     # Determine required DNS
     properties.update(outputs)
@@ -121,6 +135,10 @@ def update_ses_domain_identity(domain, properties):
 
     return outputs
 
+def update_ses_email_identity(email, properties):
+    ses = boto3.client('ses', region_name=properties['Region'])
+
+    ses.verify_email_identity(EmailAddress=email)
 
 def generate_route53_records(properties):
     """Return list of AWS::Route53::RecordSet resources required"""
