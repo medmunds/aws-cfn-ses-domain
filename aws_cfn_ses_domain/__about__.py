@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright 2018 Michael V. Edmunds
+# Copyright 2019 Michael V. Edmunds
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this software except in compliance with the License.
@@ -19,7 +19,7 @@ __version__ = ".".join(str(v) for v in VERSION)
 
 NAME = "aws-cfn-ses-domain"
 DESCRIPTION = "AWS CloudFormation custom resource for managing Amazon SES domains"
-HOMEPAGE = "https://gitlab.com/medmunds/aws-cfn-ses-domain"
+HOMEPAGE = "https://github.com/medmunds/aws-cfn-ses-domain"
 AUTHOR = "Mike Edmunds"
 AUTHOR_EMAIL = "medmunds@gmail.com"
 LICENSE = "Apache License 2.0"

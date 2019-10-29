@@ -470,7 +470,7 @@ standard in CloudFormation. Please consider adopting or obsoleting this package.
 [pipenv]:
   https://pipenv.readthedocs.io/
 [releases]: 
-  https://gitlab.com/medmunds/aws-cfn-ses-domain/tags
+  https://github.com/medmunds/aws-cfn-ses-domain/releases
 [ses-smtp-endpoints]: 
   https://docs.aws.amazon.com/ses/latest/DeveloperGuide/regions.html#region-endpoints
 [VerifyDomainDkim]: 
