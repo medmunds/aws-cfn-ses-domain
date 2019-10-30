@@ -3,7 +3,10 @@
 #
 S3_BUCKET = aws-utils.medmunds.com
 S3_PREFIX = cfn-ses-domain
-GITLAB_PROJECT_ID := medmunds/aws-cfn-ses-domain
+GITHUB_REPO := medmunds/aws-cfn-ses-domain
+# If you will run `make release`, obtain a GitHub personal access token with
+# 'public_repo' scope ('repo' if private) from https://github.com/settings/tokens,
+# and set GITHUB_TOKEN in your environment (*not* in this file).
 
 #
 # Directories
@@ -169,8 +172,8 @@ endif
 
 
 .PHONY: release
-## Release this package to GitLab and PyPI
-release: release-gitlab release-pypi
+## Release this package to GitHub and PyPI
+release: release-github release-pypi
 
 
 .PHONY: release-pypi
@@ -183,16 +186,20 @@ release-pypi:
 	$(TWINE) upload $(PY_DIST_DIR)/*
 
 
-.PHONY: release-gitlab
-release-gitlab: $(cf_packaged) $(lambda_packaged)
-	$(call heading, Releasing v$(VERSION) to GitLab $(GITLAB_PROJECT_ID))
+.PHONY: release-github
+release-github: $(cf_packaged) $(lambda_packaged)
+ifndef GITHUB_TOKEN
+	$(error Set GITHUB_TOKEN in the environment before `make $@`)
+else
+	$(call heading, Releasing v$(VERSION) to GitHub $(GITHUB_REPO))
 	git tag -m 'Release $(VERSION)' 'v$(VERSION)'
 	git push --tags
-	$(PYTHON) release-gitlab.py \
-	  --id '$(GITLAB_PROJECT_ID)' \
-	  --name 'v$(VERSION)' \
-	  --description '{artifacts}' \
-	  --artifacts $^
+	$(PYTHON) release-github.py \
+	  --repo '$(GITHUB_REPO)' \
+	  --tag 'v$(VERSION)' \
+	  --description 'See the [CHANGELOG](https://github.com/{repo}/blob/master/CHANGELOG.md#{tag_id})' \
+	  --assets $^
+endif
 
 
 .PHONY: clean
