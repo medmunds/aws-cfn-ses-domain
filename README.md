@@ -263,11 +263,10 @@ The time-to-live value to include in resulting DNS records (in seconds).
 
 ##### `Region`
 
-The AWS Region to use for determining Amazon SES [SMTP endpoints][ses-smtp-endpoints], 
-e.g., `"us-east-1"`.
-The default is the region where the `Custom::SES_Domain` resource is being provisioned.
-(This must be a region where Amazon SES is supported, and it's extremely unlikely you'd
-want to override this.)
+The AWS Region where your Amazon SES domain will be provisioned, e.g., `"us-east-1"`. 
+This must be a region where Amazon SES is supported. The default is the region where
+your CloudFormation stack is running (or technically, where the `Custom::SES_Domain` 
+lambda function is running.)
 
 *Required:* No
 
@@ -275,7 +274,7 @@ want to override this.)
 
 *Default:* `${AWS::Region}`
 
-*Update requires:* No interruption
+*Update requires:* Replacement
 
 
 
@@ -284,7 +283,11 @@ want to override this.)
 #### Ref
 
 When a `Custom::SES_Domain` resource is provided to the `Ref` intrinsic function, 
-`Ref` returns the [`Domain`](#domain) (without any trailing period).
+`Ref` returns an internal resource identifier. Your stack code should not make any
+assumptions about the format of this identifier, as it may change in future updates.
+
+(Prior to v0.3, `!Ref MySESDomain` was documented to return the domain. This is no 
+longer true, and updated code should instead use `!GetAtt MySESDomain.Domain`.)
 
 
 #### Fn::GetAtt

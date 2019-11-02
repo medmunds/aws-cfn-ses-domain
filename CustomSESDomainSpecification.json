@@ -49,7 +49,7 @@
           "Documentation": "https://github.com/medmunds/aws-cfn-ses-domain/blob/master/README.md#region",
           "PrimitiveType": "String",
           "Required": false,
-          "UpdateType": "Mutable"
+          "UpdateType": "Immutable"
         }
       },
       "Attributes": {
