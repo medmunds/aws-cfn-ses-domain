@@ -85,7 +85,7 @@ class TestLambdaHandler(TestCase):
         # Should default to SES in current region (where stack is running):
         self.mock_boto3_client.assert_called_once_with('ses', region_name="mock-region")
 
-        outputs = self.assertLambdaResponse(event, physical_resource_id="example.com")
+        outputs = self.assertLambdaResponse(event, physical_resource_id="example.com:mock-region")
         self.assertEqual(outputs["Domain"], "example.com")
         self.assertEqual(outputs["VerificationToken"], "ID_TOKEN")
         self.assertEqual(outputs["DkimTokens"], ["DKIM_TOKEN_1", "DKIM_TOKEN_2"])
@@ -146,7 +146,7 @@ class TestLambdaHandler(TestCase):
         # Should override SES region when Region property provided:
         self.mock_boto3_client.assert_called_once_with('ses', region_name="us-test-2")
 
-        outputs = self.assertLambdaResponse(event, physical_resource_id="example.com")
+        outputs = self.assertLambdaResponse(event, physical_resource_id="example.com:us-test-2")
         self.assertEqual(outputs["Domain"], "example.com")
         self.assertEqual(outputs["VerificationToken"], "ID_TOKEN")
         self.assertEqual(outputs["DkimTokens"], ["DKIM_TOKEN_1", "DKIM_TOKEN_2"])
@@ -200,7 +200,7 @@ class TestLambdaHandler(TestCase):
             {'Identity': "example.com", 'MailFromDomain': ""})
         lambda_handler(event, mock_context)
 
-        outputs = self.assertLambdaResponse(event, physical_resource_id="example.com")
+        outputs = self.assertLambdaResponse(event, physical_resource_id="example.com:mock-region")
         self.assertEqual(outputs["Domain"], "example.com")
         self.assertEqual(outputs["VerificationToken"], "ID_TOKEN")
         self.assertNotIn("DkimTokens", outputs)
@@ -223,6 +223,7 @@ class TestLambdaHandler(TestCase):
     def test_delete(self):
         event = {
             "RequestType": "Delete",
+            "PhysicalResourceId": "example.com:mock-region",
             "ResourceProperties": {
                 "Domain": "example.com.",
                 "EnableSend": True,
@@ -238,7 +239,7 @@ class TestLambdaHandler(TestCase):
             {'Identity': "example.com", 'MailFromDomain': ""})
         lambda_handler(event, mock_context)
 
-        outputs = self.assertLambdaResponse(event, physical_resource_id="example.com")
+        outputs = self.assertLambdaResponse(event, physical_resource_id="example.com:mock-region")
         self.assertEqual(outputs["Domain"], "example.com")
         self.assertNotIn("VerificationToken", outputs)
         self.assertNotIn("DkimTokens", outputs)
@@ -249,6 +250,24 @@ class TestLambdaHandler(TestCase):
         self.assertNotIn("ReceiveMX", outputs)
         self.assertEqual(outputs["Route53RecordSets"], [])
         self.assertEqual(outputs["ZoneFileEntries"], [])
+
+    def test_v0_3_physical_id_change(self):
+        # Prior to v0.3, the PhysicalResourceId was just the cleaned Domain.
+        # Make sure we ignore the Delete operation that CF will issue on the
+        # old physical ID after upgrading.
+        event = {
+            "RequestType": "Delete",
+            "PhysicalResourceId": "example.com",  # old format: just the domain
+            "ResourceProperties": {
+                "Domain": "example.com.",
+                "EnableSend": True,
+                "EnableReceive": True,
+            }}
+        # self.ses_stubber.nothing: *no* SES ops should occur
+        lambda_handler(event, mock_context)
+
+        outputs = self.assertLambdaResponse(event, physical_resource_id="example.com")
+        self.assertEqual(outputs["Domain"], "example.com")
 
     def test_boto_error(self):
         event = {
@@ -267,7 +286,7 @@ class TestLambdaHandler(TestCase):
             event, status="FAILED",
             reason="An error occurred (InvalidParameterValue) when calling the"
                    " VerifyDomainIdentity operation: Invalid domain name bad domain name.",
-            physical_resource_id="bad domain name")
+            physical_resource_id=MOCK_ANY)
 
         # Check that the exception got logged
         self.assertEqual(len(cm.output), 1)

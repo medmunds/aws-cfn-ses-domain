@@ -21,9 +21,8 @@ DEFAULT_PROPERTIES = {
     "MailFromSubdomain": "mail",
     "CustomDMARC": '"v=DMARC1; p=none; pct=100; sp=none; aspf=r;"',
     "TTL": "1800",
-    "Region": os.getenv("AWS_REGION"),
+    "Region": os.getenv("AWS_REGION"),  # where the stack (lambda fn) is running
 }
-
 
 
 def lambda_handler(event, context):
@@ -45,6 +44,18 @@ def lambda_handler(event, context):
                     reason="The 'Domain' property is required.",
                     physical_resource_id="MISSING")
 
+    physical_resource_id = "{Domain}:{Region}".format(**properties)
+
+    if event["RequestType"] == "Delete" and event["PhysicalResourceId"] == domain:
+        # v0.3 backwards compatibility:
+        # Earlier versions didn't include the region in PhysicalResourceId.
+        # When a CF update results in a new v0.3 id (with the region), CF will
+        # automatically issue a Delete on the old id. We need to ignore that
+        # request (or we'd incorrecty delete the domain we meant to provision).
+        return send(event, context, SUCCESS,
+                    response_data={"Domain": domain},
+                    physical_resource_id=domain)
+
     if event["RequestType"] == "Delete":
         # Treat Delete as a request to disable both directions
         properties["EnableSend"] = False
@@ -57,7 +68,7 @@ def lambda_handler(event, context):
         # for ClientError, might be helpful to look at error.response, too
         logger.exception("Error updating SES: %s", error)
         return send(event, context, FAILED,
-                    reason=str(error), physical_resource_id=domain)
+                    reason=str(error), physical_resource_id=physical_resource_id)
 
     # Determine required DNS
     properties.update(outputs)
@@ -69,7 +80,7 @@ def lambda_handler(event, context):
     })
 
     return send(event, context, SUCCESS,
-                response_data=outputs, physical_resource_id=domain)
+                response_data=outputs, physical_resource_id=physical_resource_id)
 
 
 def update_ses_domain_identity(domain, properties):
