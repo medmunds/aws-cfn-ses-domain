@@ -21,9 +21,11 @@ class TestLambdaHandler(TestCase):
         boto3_client_patcher = patch('aws_cfn_ses_domain.lambda_function.boto3.client', return_value=ses)
         self.mock_boto3_client = boto3_client_patcher.start()
         self.addCleanup(boto3_client_patcher.stop)
+
         self.ses_stubber = Stubber(ses)
         self.ses_stubber.activate()
         self.addCleanup(self.ses_stubber.deactivate)
+
         send_patcher = patch('aws_cfn_ses_domain.lambda_function.send')
         self.mock_send = send_patcher.start()
         self.addCleanup(send_patcher.stop)
@@ -79,6 +81,9 @@ class TestLambdaHandler(TestCase):
             {},
             {'Identity': "example.com", 'MailFromDomain': "mail.example.com"})
         lambda_handler(event, mock_context)
+
+        # Should default to SES in current region (where stack is running):
+        self.mock_boto3_client.assert_called_once_with('ses', region_name="mock-region")
 
         outputs = self.assertLambdaResponse(event, physical_resource_id="example.com")
         self.assertEqual(outputs["Domain"], "example.com")
@@ -137,6 +142,9 @@ class TestLambdaHandler(TestCase):
             {},
             {'Identity': "example.com", 'MailFromDomain': "bounce.example.com"})
         lambda_handler(event, mock_context)
+
+        # Should override SES region when Region property provided:
+        self.mock_boto3_client.assert_called_once_with('ses', region_name="us-test-2")
 
         outputs = self.assertLambdaResponse(event, physical_resource_id="example.com")
         self.assertEqual(outputs["Domain"], "example.com")
