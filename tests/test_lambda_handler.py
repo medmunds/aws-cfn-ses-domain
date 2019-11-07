@@ -9,6 +9,7 @@ from aws_cfn_ses_domain.lambda_function import lambda_handler
 
 
 mock_context = object()
+mock_stack_id = "arn:aws:cloudformation:mock-region:111111111111:stack/example/deadbeef"
 
 
 class TestLambdaHandler(TestCase):
@@ -43,7 +44,8 @@ class TestLambdaHandler(TestCase):
     def test_domain_required(self):
         event = {
             "RequestType": "Create",
-            "ResourceProperties": {}}
+            "ResourceProperties": {},
+            "StackId": mock_stack_id}
         lambda_handler(event, mock_context)
         self.assertLambdaResponse(
             event, status="FAILED",
@@ -55,7 +57,8 @@ class TestLambdaHandler(TestCase):
             "RequestType": "Create",
             "ResourceProperties": {
                 "Domain": " . ",
-            }}
+            },
+            "StackId": mock_stack_id}
         lambda_handler(event, mock_context)
         self.assertLambdaResponse(
             event, status="FAILED",
@@ -67,7 +70,8 @@ class TestLambdaHandler(TestCase):
             "RequestType": "Create",
             "ResourceProperties": {
                 "Domain": "example.com.",
-            }}
+            },
+            "StackId": mock_stack_id}
         self.ses_stubber.add_response(
             'verify_domain_identity',
             {'VerificationToken': "ID_TOKEN"},
@@ -85,7 +89,8 @@ class TestLambdaHandler(TestCase):
         # Should default to SES in current region (where stack is running):
         self.mock_boto3_client.assert_called_once_with('ses', region_name="mock-region")
 
-        outputs = self.assertLambdaResponse(event, physical_resource_id="example.com:mock-region")
+        outputs = self.assertLambdaResponse(
+            event, physical_resource_id="arn:aws:ses:mock-region:111111111111:identity/example.com")
         self.assertEqual(outputs["Domain"], "example.com")
         self.assertEqual(outputs["VerificationToken"], "ID_TOKEN")
         self.assertEqual(outputs["DkimTokens"], ["DKIM_TOKEN_1", "DKIM_TOKEN_2"])
@@ -128,7 +133,8 @@ class TestLambdaHandler(TestCase):
                 "CustomDMARC": '"v=DMARC1; p=quarantine; rua=mailto:d@example.com;"',
                 "TTL": "300",
                 "Region": "us-test-2",
-            }}
+            },
+            "StackId": mock_stack_id}
         self.ses_stubber.add_response(
             'verify_domain_identity',
             {'VerificationToken': "ID_TOKEN"},
@@ -146,7 +152,8 @@ class TestLambdaHandler(TestCase):
         # Should override SES region when Region property provided:
         self.mock_boto3_client.assert_called_once_with('ses', region_name="us-test-2")
 
-        outputs = self.assertLambdaResponse(event, physical_resource_id="example.com:us-test-2")
+        outputs = self.assertLambdaResponse(
+            event, physical_resource_id="arn:aws:ses:us-test-2:111111111111:identity/example.com")
         self.assertEqual(outputs["Domain"], "example.com")
         self.assertEqual(outputs["VerificationToken"], "ID_TOKEN")
         self.assertEqual(outputs["DkimTokens"], ["DKIM_TOKEN_1", "DKIM_TOKEN_2"])
@@ -189,7 +196,8 @@ class TestLambdaHandler(TestCase):
                 "EnableSend": False,
                 "EnableReceive": True,
                 "CustomDMARC": None,
-            }}
+            },
+            "StackId": mock_stack_id}
         self.ses_stubber.add_response(
             'verify_domain_identity',
             {'VerificationToken': "ID_TOKEN"},
@@ -200,7 +208,8 @@ class TestLambdaHandler(TestCase):
             {'Identity': "example.com", 'MailFromDomain': ""})
         lambda_handler(event, mock_context)
 
-        outputs = self.assertLambdaResponse(event, physical_resource_id="example.com:mock-region")
+        outputs = self.assertLambdaResponse(
+            event, physical_resource_id="arn:aws:ses:mock-region:111111111111:identity/example.com")
         self.assertEqual(outputs["Domain"], "example.com")
         self.assertEqual(outputs["VerificationToken"], "ID_TOKEN")
         self.assertNotIn("DkimTokens", outputs)
@@ -228,7 +237,8 @@ class TestLambdaHandler(TestCase):
                 "Domain": "example.com.",
                 "EnableSend": True,
                 "EnableReceive": True,
-            }}
+            },
+            "StackId": mock_stack_id}
         self.ses_stubber.add_response(
             'delete_identity',
             {},
@@ -239,7 +249,8 @@ class TestLambdaHandler(TestCase):
             {'Identity': "example.com", 'MailFromDomain': ""})
         lambda_handler(event, mock_context)
 
-        outputs = self.assertLambdaResponse(event, physical_resource_id="example.com:mock-region")
+        outputs = self.assertLambdaResponse(
+            event, physical_resource_id="arn:aws:ses:mock-region:111111111111:identity/example.com")
         self.assertEqual(outputs["Domain"], "example.com")
         self.assertNotIn("VerificationToken", outputs)
         self.assertNotIn("DkimTokens", outputs)
@@ -262,7 +273,8 @@ class TestLambdaHandler(TestCase):
                 "Domain": "example.com.",
                 "EnableSend": True,
                 "EnableReceive": True,
-            }}
+            },
+            "StackId": mock_stack_id}
         # self.ses_stubber.nothing: *no* SES ops should occur
         lambda_handler(event, mock_context)
 
@@ -274,7 +286,8 @@ class TestLambdaHandler(TestCase):
             "RequestType": "Create",
             "ResourceProperties": {
                 "Domain": "bad domain name",
-            }}
+            },
+            "StackId": mock_stack_id}
         self.ses_stubber.add_client_error(
             'verify_domain_identity',
             "InvalidParameterValue",

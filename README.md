@@ -283,11 +283,11 @@ lambda function is running.)
 #### Ref
 
 When a `Custom::SES_Domain` resource is provided to the `Ref` intrinsic function, 
-`Ref` returns an internal resource identifier. Your stack code should not make any
-assumptions about the format of this identifier, as it may change in future updates.
+`Ref` returns the Amazon Resource Name (ARN) of the Amazon SES domain identity 
+(e.g., `arn:aws:ses:us-east-1:111111111111:identity/example.com`).
 
-(Prior to v0.3, `!Ref MySESDomain` was documented to return the domain. This is no 
-longer true, and updated code should instead use `!GetAtt MySESDomain.Domain`.)
+*Changed in v0.3:* Earlier versions returned the domain (which is still available 
+as `!GetAtt MySESDomain.Domain`).
 
 
 #### Fn::GetAtt

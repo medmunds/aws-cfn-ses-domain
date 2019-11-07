@@ -6,16 +6,15 @@
 
 ### Breaking changes
 
-* It was necessary to change the physical resource ID for `Custom::SES_Domain` 
-  resources. As a result, `!Ref` will no longer return the domain name. If you 
-  have templates that use `!Ref MySESDomain` to get the domain, change them 
-  to `!GetAtt MySESDomain.Domain` instead. (You should not attempt to extract data 
-  from the new `!Ref` format.)
+* The physical resource ID of a `Custom::SES_Domain` resource is now the full ARN 
+  of the Amazon SES domain identity. (Previously it was just the domain name.)
+  If you have templates that use `!Ref MySESDomain` to get the domain, change them 
+  to `!GetAtt MySESDomain.Domain` instead.
 
 * Because of the physical resource ID change, the first stack update after upgrading
   to v0.3 will appear to update and then delete existing `Custom::SES_Domain` resources.
   Don't be alarmed: your SES domain *isn't* actually deleted. (The delete operation 
-  is related to the old physical resource ID, and is ignored.)
+  covers the old physical resource ID, and will be ignored.)
 
 ### Fixes
 
