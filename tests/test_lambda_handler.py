@@ -194,7 +194,7 @@ class TestLambdaHandler(TestCase):
 
     def test_update_receive_only(self):
         event = {
-            "RequestType": "Create",
+            "RequestType": "Update",
             "ResourceProperties": {
                 "Domain": "example.com.",
                 "EnableSend": False,
@@ -236,7 +236,7 @@ class TestLambdaHandler(TestCase):
     def test_delete(self):
         event = {
             "RequestType": "Delete",
-            "PhysicalResourceId": "example.com:mock-region",
+            "PhysicalResourceId": "arn:aws:ses:mock-region:111111111111:identity/example.com",
             "ResourceProperties": {
                 "Domain": "example.com.",
                 "EnableSend": True,
