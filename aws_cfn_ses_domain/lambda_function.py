@@ -60,7 +60,7 @@ def lambda_handler(event, context):
         return send(event, context, FAILED,
                     reason=str(error), physical_resource_id=domain)
 
-    if email:
+    if email and event["RequestType"] != "Delete":
         try:
             update_ses_email_identity(email, properties)
 
