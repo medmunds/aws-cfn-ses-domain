@@ -1,53 +1,22 @@
 import os
-import boto3
-from unittest import TestCase
-from unittest.mock import patch, ANY as MOCK_ANY
-from botocore.stub import Stubber
 
-os.environ["AWS_REGION"] = "mock-region"  # (before loading lambda_function)
-from aws_cfn_ses_domain.lambda_function import lambda_handler
+from .base import HandlerTestCase, MOCK_ANY
+
+os.environ["AWS_REGION"] = "mock-region"  # (before importing handler)
+from aws_cfn_ses_domain.ses_domain_identity import handle_domain_identity_request
 
 
-mock_context = object()
-mock_stack_id = "arn:aws:cloudformation:mock-region:111111111111:stack/example/deadbeef"
+class TestDomainIdentityHandler(HandlerTestCase):
 
-
-class TestLambdaHandler(TestCase):
-    # Use botocore.stub.Stubber to simulate AWS responses
-
-    maxDiff = None
-
-    def setUp(self):
-        ses = boto3.client('ses')  # need a real client for Stubber
-        boto3_client_patcher = patch('aws_cfn_ses_domain.lambda_function.boto3.client', return_value=ses)
-        self.mock_boto3_client = boto3_client_patcher.start()
-        self.addCleanup(boto3_client_patcher.stop)
-
-        self.ses_stubber = Stubber(ses)
-        self.ses_stubber.activate()
-        self.addCleanup(self.ses_stubber.deactivate)
-
-        send_patcher = patch('aws_cfn_ses_domain.lambda_function.send')
-        self.mock_send = send_patcher.start()
-        self.addCleanup(send_patcher.stop)
-
-    def tearDown(self):
-        self.ses_stubber.assert_no_pending_responses()
-
-    def assertLambdaResponse(self, event=MOCK_ANY, context=mock_context, status="SUCCESS", **kwargs):
-        """Asserts mock_send was called once, and returns response_data (if any)"""
-        if status == "SUCCESS":
-            kwargs.setdefault("response_data", MOCK_ANY)
-        self.mock_send.assert_called_once_with(event, context, status, **kwargs)
-        return self.mock_send.call_args[1].get("response_data", None)
+    patch_base = 'aws_cfn_ses_domain.ses_domain_identity'
 
     def test_domain_required(self):
         event = {
             "RequestType": "Create",
             "ResourceProperties": {},
-            "StackId": mock_stack_id}
-        lambda_handler(event, mock_context)
-        self.assertLambdaResponse(
+            "StackId": self.mock_stack_id}
+        handle_domain_identity_request(event, self.mock_context)
+        self.assertSentResponse(
             event, status="FAILED",
             reason="The 'Domain' property is required.",
             physical_resource_id="MISSING")
@@ -58,9 +27,9 @@ class TestLambdaHandler(TestCase):
             "ResourceProperties": {
                 "Domain": " . ",
             },
-            "StackId": mock_stack_id}
-        lambda_handler(event, mock_context)
-        self.assertLambdaResponse(
+            "StackId": self.mock_stack_id}
+        handle_domain_identity_request(event, self.mock_context)
+        self.assertSentResponse(
             event, status="FAILED",
             reason="The 'Domain' property is required.",
             physical_resource_id="MISSING")
@@ -71,7 +40,7 @@ class TestLambdaHandler(TestCase):
             "ResourceProperties": {
                 "Domain": "example.com.",
             },
-            "StackId": mock_stack_id}
+            "StackId": self.mock_stack_id}
         self.ses_stubber.add_response(
             'verify_domain_identity',
             {'VerificationToken': "ID_TOKEN"},
@@ -84,12 +53,12 @@ class TestLambdaHandler(TestCase):
             'set_identity_mail_from_domain',
             {},
             {'Identity': "example.com", 'MailFromDomain': "mail.example.com"})
-        lambda_handler(event, mock_context)
+        handle_domain_identity_request(event, self.mock_context)
 
         # Should default to SES in current region (where stack is running):
         self.mock_boto3_client.assert_called_once_with('ses', region_name="mock-region")
 
-        outputs = self.assertLambdaResponse(
+        outputs = self.assertSentResponse(
             event, physical_resource_id="arn:aws:ses:mock-region:111111111111:identity/example.com")
         self.assertEqual(outputs["Domain"], "example.com")
         self.assertEqual(outputs["VerificationToken"], "ID_TOKEN")
@@ -136,7 +105,7 @@ class TestLambdaHandler(TestCase):
                 "TTL": "300",
                 "Region": "us-test-2",
             },
-            "StackId": mock_stack_id}
+            "StackId": self.mock_stack_id}
         self.ses_stubber.add_response(
             'verify_domain_identity',
             {'VerificationToken': "ID_TOKEN"},
@@ -149,12 +118,12 @@ class TestLambdaHandler(TestCase):
             'set_identity_mail_from_domain',
             {},
             {'Identity': "example.com", 'MailFromDomain': "bounce.example.com"})
-        lambda_handler(event, mock_context)
+        handle_domain_identity_request(event, self.mock_context)
 
         # Should override SES region when Region property provided:
         self.mock_boto3_client.assert_called_once_with('ses', region_name="us-test-2")
 
-        outputs = self.assertLambdaResponse(
+        outputs = self.assertSentResponse(
             event, physical_resource_id="arn:aws:ses:us-test-2:111111111111:identity/example.com")
         self.assertEqual(outputs["Domain"], "example.com")
         self.assertEqual(outputs["VerificationToken"], "ID_TOKEN")
@@ -201,7 +170,7 @@ class TestLambdaHandler(TestCase):
                 "EnableReceive": True,
                 "CustomDMARC": None,
             },
-            "StackId": mock_stack_id}
+            "StackId": self.mock_stack_id}
         self.ses_stubber.add_response(
             'verify_domain_identity',
             {'VerificationToken': "ID_TOKEN"},
@@ -210,9 +179,9 @@ class TestLambdaHandler(TestCase):
             'set_identity_mail_from_domain',
             {},
             {'Identity': "example.com", 'MailFromDomain': ""})
-        lambda_handler(event, mock_context)
+        handle_domain_identity_request(event, self.mock_context)
 
-        outputs = self.assertLambdaResponse(
+        outputs = self.assertSentResponse(
             event, physical_resource_id="arn:aws:ses:mock-region:111111111111:identity/example.com")
         self.assertEqual(outputs["Domain"], "example.com")
         self.assertEqual(outputs["VerificationToken"], "ID_TOKEN")
@@ -242,7 +211,7 @@ class TestLambdaHandler(TestCase):
                 "EnableSend": True,
                 "EnableReceive": True,
             },
-            "StackId": mock_stack_id}
+            "StackId": self.mock_stack_id}
         self.ses_stubber.add_response(
             'delete_identity',
             {},
@@ -251,9 +220,9 @@ class TestLambdaHandler(TestCase):
             'set_identity_mail_from_domain',
             {},
             {'Identity': "example.com", 'MailFromDomain': ""})
-        lambda_handler(event, mock_context)
+        handle_domain_identity_request(event, self.mock_context)
 
-        outputs = self.assertLambdaResponse(
+        outputs = self.assertSentResponse(
             event, physical_resource_id="arn:aws:ses:mock-region:111111111111:identity/example.com")
         self.assertEqual(outputs["Domain"], "example.com")
         self.assertNotIn("VerificationToken", outputs)
@@ -278,11 +247,11 @@ class TestLambdaHandler(TestCase):
                 "EnableSend": True,
                 "EnableReceive": True,
             },
-            "StackId": mock_stack_id}
+            "StackId": self.mock_stack_id}
         # self.ses_stubber.nothing: *no* SES ops should occur
-        lambda_handler(event, mock_context)
+        handle_domain_identity_request(event, self.mock_context)
 
-        outputs = self.assertLambdaResponse(event, physical_resource_id="example.com")
+        outputs = self.assertSentResponse(event, physical_resource_id="example.com")
         self.assertEqual(outputs["Domain"], "example.com")
 
     def test_boto_error(self):
@@ -291,15 +260,15 @@ class TestLambdaHandler(TestCase):
             "ResourceProperties": {
                 "Domain": "bad domain name",
             },
-            "StackId": mock_stack_id}
+            "StackId": self.mock_stack_id}
         self.ses_stubber.add_client_error(
             'verify_domain_identity',
             "InvalidParameterValue",
             "Invalid domain name bad domain name.",
             expected_params={'Domain': "bad domain name"})
         with self.assertLogs(level="ERROR") as cm:
-            lambda_handler(event, mock_context)
-        self.assertLambdaResponse(
+            handle_domain_identity_request(event, self.mock_context)
+        self.assertSentResponse(
             event, status="FAILED",
             reason="An error occurred (InvalidParameterValue) when calling the"
                    " VerifyDomainIdentity operation: Invalid domain name bad domain name.",

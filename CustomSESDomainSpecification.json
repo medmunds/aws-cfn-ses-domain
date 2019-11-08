@@ -93,6 +93,40 @@
           "PrimitiveType": "String"
         }
       }
+    },
+    "Custom::SES_EmailIdentity": {
+      "Documentation": "https://github.com/medmunds/aws-cfn-ses-domain/blob/master/README.md",
+      "Properties": {
+        "ServiceToken": {
+          "Documentation": "https://github.com/medmunds/aws-cfn-ses-domain/blob/master/README.md#servicetoken-2",
+          "PrimitiveType": "String",
+          "Required": true,
+          "UpdateType": "Immutable"
+        },
+        "EmailAddress": {
+          "Documentation": "https://github.com/medmunds/aws-cfn-ses-domain/blob/master/README.md#emailaddress",
+          "PrimitiveType": "String",
+          "Required": true,
+          "UpdateType": "Immutable"
+        },
+        "Region": {
+          "Documentation": "https://github.com/medmunds/aws-cfn-ses-domain/blob/master/README.md#region-2",
+          "PrimitiveType": "String",
+          "Required": false,
+          "UpdateType": "Immutable"
+        }
+      },
+      "Attributes": {
+        "EmailAddress": {
+          "PrimitiveType": "String"
+        },
+        "Region": {
+          "PrimitiveType": "String"
+        },
+        "Arn": {
+          "PrimitiveType": "String"
+        }
+      }
     }
   },
   "ResourceSpecificationVersion": "2.11.0"

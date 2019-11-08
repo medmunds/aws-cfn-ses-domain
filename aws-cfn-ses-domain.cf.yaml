@@ -2,8 +2,8 @@ AWSTemplateFormatVersion: "2010-09-09"
 
 Description: >
   Creates an AWS Lambda Function that can be used as a CloudFormation CustomResource
-  to provision and verify an Amazon SES domain identity for sending and/or receiving
-  email. (See the readme for more information.)
+  to manage Amazon SES resources that aren't built into CloudFormation, including
+  domain identities and email identities. (See the readme for more information.)
 
 Parameters:
   LambdaCodeS3Bucket:
@@ -20,15 +20,25 @@ Parameters:
       The S3 key to the LAMBDA_ZIP deployment package.
 
 Outputs:
+  CustomDomainIdentityArn:
+    Description: The ServiceToken for the Custom::SES_DomainIdentity resource
+    Value: !GetAtt CustomDomainLambdaFunction.Arn
+  CustomEmailIdentityArn:
+    Description: The ServiceToken for the Custom::SES_EmailIdentity resource
+    Value: !GetAtt CustomEmailLambdaFunction.Arn
   Arn:
-    Description: The ServiceToken for the Custom::SES_Domain resource
-    Value: !GetAtt LambdaFunction.Arn
+    Description: >
+      (DEPRECATED - Use CustomDomainIdentityArn instead)
+      The ServiceToken for the Custom::SES_Domain resource
+    Value: !GetAtt CustomDomainLambdaFunction.Arn
   Name:
-    Description: The AWS::Lambda::Function that implements Custom::SES_Domain
-    Value: !Ref LambdaFunction
+    Description: >
+      (DEPRECATED - shouldn't be necessary)
+      The AWS::Lambda::Function that implements Custom::SES_Domain
+    Value: !Ref CustomDomainLambdaFunction
 
 Resources:
-  LambdaExecutionRole:
+  CustomDomainLambdaExecutionRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -60,12 +70,49 @@ Resources:
             - ses:VerifyDomainIdentity
             Resource: "*"
 
-  LambdaFunction:
+  CustomEmailLambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Sid: AssumeLambdaExecutionRole
+          Effect: Allow
+          Principal:
+            Service: lambda.amazonaws.com
+          Action: sts:AssumeRole
+      ManagedPolicyArns:
+      # (allows logging)
+      - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+      - PolicyName: ProvisionSESEmailIdentities
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Sid: AllowSESEmailIdentityProvisioning
+            Effect: Allow
+            Action:
+            - ses:DeleteIdentity
+            - ses:VerifyEmailIdentity
+            Resource: "*"
+
+  CustomDomainLambdaFunction:
     Type: AWS::Lambda::Function
     Properties:
       Description: CloudFormation custom SES domain provisioning
-      Handler: index.lambda_handler
-      Role: !GetAtt LambdaExecutionRole.Arn
+      Handler: index.handle_domain_identity_request
+      Role: !GetAtt CustomDomainLambdaExecutionRole.Arn
+      Runtime: python3.6
+      Code:
+        S3Bucket: !Ref LambdaCodeS3Bucket
+        S3Key: !Ref LambdaCodeS3Key
+
+  CustomEmailLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: CloudFormation custom SES email identity provisioning
+      Handler: index.handle_email_identity_request
+      Role: !GetAtt CustomEmailLambdaExecutionRole.Arn
       Runtime: python3.6
       Code:
         S3Bucket: !Ref LambdaCodeS3Bucket
