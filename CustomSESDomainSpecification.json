@@ -85,6 +85,12 @@
         },
         "ReceiveMX": {
           "PrimitiveType": "String"
+        },
+        "Region": {
+          "PrimitiveType": "String"
+        },
+        "Arn": {
+          "PrimitiveType": "String"
         }
       }
     }

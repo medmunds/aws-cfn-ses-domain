@@ -121,6 +121,8 @@ class TestLambdaHandler(TestCase):
             'mail.example.com.                   \t1800\tIN\tTXT  \t"v=spf1 include:amazonses.com -all"',
             '_dmarc.example.com.                 \t1800\tIN\tTXT  \t"v=DMARC1; p=none; pct=100; sp=none; aspf=r;"',
         ])
+        self.assertEqual(outputs["Region"], "mock-region")
+        self.assertEqual(outputs["Arn"], "arn:aws:ses:mock-region:111111111111:identity/example.com")
 
     def test_create_all_options(self):
         event = {
@@ -187,6 +189,8 @@ class TestLambdaHandler(TestCase):
             '_dmarc.example.com.                 \t300\tIN\tTXT  \t"v=DMARC1; p=quarantine; rua=mailto:d@example.com;"',
             'example.com.                        \t300\tIN\tMX   \t10 inbound-smtp.us-test-2.amazonaws.com.',
         ])
+        self.assertEqual(outputs["Region"], "us-test-2")
+        self.assertEqual(outputs["Arn"], "arn:aws:ses:us-test-2:111111111111:identity/example.com")
 
     def test_update_receive_only(self):
         event = {

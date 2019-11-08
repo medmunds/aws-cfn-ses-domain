@@ -378,6 +378,11 @@ may be helpful for generating custom DNS records or other purposes:
 * `ReceiveMX` (String): the inbound MX host to use for receiving email, e.g.,
   `inbound-smtp.us-east-1.amazonaws.com` 
   (not available if [`EnableReceive`](#enablereceive) is false) 
+* `Arn` (String): the Amazon Resource Name (ARN) of the provisioned Amazon SES 
+  domain identity (useful for delegating sending authorization; this is the same
+  value returned by [`!Ref MySESDomain`](#ref))
+* `Region` (String): the resolved [`Region`](#region) where the Amazon SES domain 
+  was provisioned 
 
 
 ### Validating Your Templates

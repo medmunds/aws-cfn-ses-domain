@@ -46,7 +46,7 @@ def lambda_handler(event, context):
 
     # Use an SES Identity ARN as the PhysicalResourceId - see:
     # https://docs.aws.amazon.com/IAM/latest/UserGuide/list_amazonses.html#amazonses-resources-for-iam-policies
-    physical_resource_id = format_arn(
+    domain_arn = format_arn(
         service="ses", region=properties["Region"],
         resource_type="identity", resource_name=domain,
         defaults_from=event["StackId"])  # current stack's ARN has account and partition
@@ -73,19 +73,21 @@ def lambda_handler(event, context):
         # for ClientError, might be helpful to look at error.response, too
         logger.exception("Error updating SES: %s", error)
         return send(event, context, FAILED,
-                    reason=str(error), physical_resource_id=physical_resource_id)
+                    reason=str(error), physical_resource_id=domain_arn)
 
     # Determine required DNS
     properties.update(outputs)
     route53_records = generate_route53_records(properties)
     outputs.update({
+        "Arn": domain_arn,
         "Domain": domain,
+        "Region": properties["Region"],
         "Route53RecordSets": route53_records,
         "ZoneFileEntries": route53_to_zone_file(route53_records),
     })
 
     return send(event, context, SUCCESS,
-                response_data=outputs, physical_resource_id=physical_resource_id)
+                response_data=outputs, physical_resource_id=domain_arn)
 
 
 def update_ses_domain_identity(domain, properties):

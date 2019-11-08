@@ -22,6 +22,11 @@
   domain in a different region from where you're running your CloudFormation stack.
   (Thanks to @gfodor.)
 
+### Features
+
+* Make [`Arn`](README.md#other-attributes) and [`Region`](README.md#other-attributes)
+  attributes available on `Custom::SES_Domain` resources.
+
 
 ## v0.2
 
