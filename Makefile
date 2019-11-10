@@ -144,18 +144,16 @@ upload: | all
 
 
 .PHONY: deploy
-## Deploy the example CloudFormation stack for DOMAIN
-deploy: $(ARTIFACTS_DIR)/example-usage-$(VERSION).cf.yaml
-ifndef DOMAIN
-	$(error Set DOMAIN to make this target (`make DOMAIN=example.com $@`))
+## Deploy the example CloudFormation stack for DOMAIN or EMAIL
+deploy-example: $(ARTIFACTS_DIR)/example-usage-$(VERSION).cf.yaml
+ifeq ($(or $(DOMAIN),$(EMAIL)),)
+	$(error Set DOMAIN and/or EMAIL to make this target (`make DOMAIN=example.com $@`))
 else
 	$(AWS) cloudformation deploy \
 	  --template-file '$(ARTIFACTS_DIR)/example-usage-$(VERSION).cf.yaml' \
-	  --stack-name example-ses-domain \
+	  --stack-name example-ses-resources \
 	  --capabilities CAPABILITY_IAM \
-	  --parameter-overrides \
-	    Domain='$(DOMAIN)' \
-	    CfnSESDomainTemplateURL='https://s3.amazonaws.com/$(S3_BUCKET)/$(S3_LAMBDA_ZIP_KEY)'
+	  --parameter-overrides Domain='$(DOMAIN)' EmailAddress='$(EMAIL)'
 endif
 
 
@@ -226,7 +224,7 @@ check: $(cf_sources)
 # Help
 # Adapted from https://gist.github.com/prwhite/8168133#gistcomment-2278355
 #
-TARGET_COL_WIDTH := 10
+TARGET_COL_WIDTH := 15
 
 .PHONY: help
 ## Show this usage info
@@ -236,7 +234,7 @@ help:
 	@echo '  $(BOLD)make$(RESET) [ VARIABLE=value ... ] target ...'
 	@echo ''
 	@echo '$(BOLD)TARGETS$(RESET)'
-	@awk '/^[a-zA-Z\-\_0-9]+:/ { \
+	@awk '/^[a-zA-Z0-9_-]+:/ { \
 		description = match(lastLine, /^## (.*)/); \
 		if (description) { \
 			target = $$1; sub(/:$$/, "", target); \
