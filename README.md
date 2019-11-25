@@ -263,11 +263,10 @@ The time-to-live value to include in resulting DNS records (in seconds).
 
 ##### `Region`
 
-The AWS Region to use for determining Amazon SES [SMTP endpoints][ses-smtp-endpoints], 
-e.g., `"us-east-1"`.
-The default is the region where the `Custom::SES_Domain` resource is being provisioned.
-(This must be a region where Amazon SES is supported, and it's extremely unlikely you'd
-want to override this.)
+The AWS Region where your Amazon SES domain will be provisioned, e.g., `"us-east-1"`. 
+This must be a region where Amazon SES is supported. The default is the region where
+your CloudFormation stack is running (or technically, where the `Custom::SES_Domain` 
+lambda function is running.)
 
 *Required:* No
 
@@ -275,7 +274,7 @@ want to override this.)
 
 *Default:* `${AWS::Region}`
 
-*Update requires:* No interruption
+*Update requires:* Replacement
 
 
 
@@ -284,7 +283,11 @@ want to override this.)
 #### Ref
 
 When a `Custom::SES_Domain` resource is provided to the `Ref` intrinsic function, 
-`Ref` returns the [`Domain`](#domain) (without any trailing period).
+`Ref` returns the Amazon Resource Name (ARN) of the Amazon SES domain identity 
+(e.g., `arn:aws:ses:us-east-1:111111111111:identity/example.com`).
+
+*Changed in v0.3:* Earlier versions returned the domain (which is still available 
+as `!GetAtt MySESDomain.Domain`).
 
 
 #### Fn::GetAtt
@@ -375,6 +378,11 @@ may be helpful for generating custom DNS records or other purposes:
 * `ReceiveMX` (String): the inbound MX host to use for receiving email, e.g.,
   `inbound-smtp.us-east-1.amazonaws.com` 
   (not available if [`EnableReceive`](#enablereceive) is false) 
+* `Arn` (String): the Amazon Resource Name (ARN) of the provisioned Amazon SES 
+  domain identity (useful for delegating sending authorization; this is the same
+  value returned by [`!Ref MySESDomain`](#ref))
+* `Region` (String): the resolved [`Region`](#region) where the Amazon SES domain 
+  was provisioned 
 
 
 ### Validating Your Templates

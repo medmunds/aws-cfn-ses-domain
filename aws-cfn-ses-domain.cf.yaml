@@ -12,7 +12,7 @@ Parameters:
     Description: >
       The S3 bucket where the LAMBDA_ZIP deployment package
       has been uploaded. Must reside in the same AWS Region where your stack
-      will be provisioning SES domains.
+      is running.
   LambdaCodeS3Key:
     Type: String
     Default: YOUR_LAMBDA_ZIP_KEY
