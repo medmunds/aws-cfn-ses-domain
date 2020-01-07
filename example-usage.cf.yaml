@@ -22,8 +22,8 @@ Parameters:
     Default: https://s3.amazonaws.com/YOUR_BUCKET_NAME/aws-cfn-ses-domain-VERSION.cf.yaml
 
 Conditions:
-  DeployDomainExample: !Equals [!Ref Domain, ""]
-  DeployEmailExample: !Equals [!Ref EmailAddress, ""]
+  DeployDomainExample: !Not [!Equals [!Ref Domain, ""]]
+  DeployEmailExample: !Not [!Equals [!Ref EmailAddress, ""]]
 
 Resources:
   # Use a nested stack to create the AWS Lambda Functions for the custom SES resources.
