@@ -143,7 +143,7 @@ upload: | all
 	  's3://$(S3_BUCKET)$(if $(S3_PREFIX),/$(S3_PREFIX),)/'
 
 
-.PHONY: deploy
+.PHONY: deploy-example
 ## Deploy the example CloudFormation stack for DOMAIN or EMAIL
 deploy-example: $(ARTIFACTS_DIR)/example-usage-$(VERSION).cf.yaml
 ifeq ($(or $(DOMAIN),$(EMAIL)),)
