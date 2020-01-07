@@ -1,30 +1,36 @@
-# AWS CloudFormation SES Domain Custom Resource
+# AWS CloudFormation resources for Amazon SES domain and email identities
 
-AWS [CloudFormation][] provides several built-in Amazon SES resource types,
-but oddly omits any way to manage SES domain identities. This package implements
-a `Custom::SES_Domain` CloudFormation [custom resource][custom-resource] that
-offers that missing functionality. 
+AWS [CloudFormation][] provides several built-in 
+[Amazon SES resource types][cfn-ses-resources], but is oddly missing the ones 
+most needed to get going with SES: **domain and email verification**. 
 
-You can use it to provision a domain for sending and/or receiving email through SES.
-The `Custom::SES_Domain` resource handles all required Amazon SES identity management 
-calls and outputs SES's required DNS entries. 
+This package implements those missing types as CloudFormation 
+[custom resources][custom-resource]: `Custom::SES_Domain` and
+`Custom::SES_EmailIdentity`. 
 
-The `Custom::SES_Domain` resource deliberately avoids manipulating Route 53 itself. 
-Instead, it returns an attribute that helps your template use a standard
-[`AWS::Route53::RecordSetGroup`][RecordSetGroup] resource for those DNS entries. 
-Or if you prefer, you can use other `Custom::SES_Domain` return values to customize 
-DNS records for Route 53, or to use some other DNS provider entirely.
+You can use `Custom::SES_Domain` to verify domains for sending and/or receiving 
+email through Amazon SES. It handles the SES domain verification calls and outputs 
+SES's required DNS entries, so you can feed them directly into a standard
+`AWS::Route53::RecordSetGroup` resource (or to another DNS provider if you're not 
+using Route 53).
 
-As an added benefit, this approach lets CloudFormation determine the optimal DNS 
-updating strategy if you change your stack (e.g., to add inbound capability to an 
-SES domain originally provisioned for sending only).
+Similarly, you can use `Custom::SES_EmailIdentity` to verify individual email addresses
+for sending through Amazon SES.
+
+The custom resource implementations will properly create, update, and delete Amazon SES
+identities as you modify your CloudFormation stack.
+
 
 **Documentation**
 
 * [Installation](#installation)
 * [Usage](#usage)
-  * [Properties](#properties)
-  * [Return Values](#return-values)
+  * [Custom::SES_Domain](#customses_domain)
+    * [Properties](#properties)
+    * [Return Values](#return-values)
+  * [Custom::SES_EmailIdentity](#customses_emailidentity)
+    * [Properties](#properties-1)
+    * [Return Values](#return-values-1)
   * [Validating Your Templates](#validating-your-templates)
 * [Development](#development)
 * [Alternatives](#alternatives)
@@ -33,9 +39,9 @@ SES domain originally provisioned for sending only).
 
 ## Installation
 
-The `Custom::SES_Domain` resource is implemented as an AWS Lambda Function. To use it
-from your CloudFormation templates, you'll need to set up that function along with an 
-IAM role giving it permission to manage your Amazon SES domains.
+The custom SES resources are implemented as AWS Lambda Functions. To use them
+from your CloudFormation templates, you'll need to set up the functions along with 
+IAM roles giving them permission to manage your Amazon SES domain/email identities.
 
 The easiest way to do this is with a CloudFormation [nested stack][NestedStack]: 
 
@@ -46,10 +52,10 @@ The easiest way to do this is with a CloudFormation [nested stack][NestedStack]:
    need not be public. 
    
 2. Then in your CloudFormation template, use a nested stack to create the Lambda 
-   Function and IAM role for the `Custom::SES_Domain` type:
+   Functions and IAM roles for the custom SES resource types:
 
 ```yaml
-  CfnSESDomain:
+  CfnSESResources:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: https://s3.amazonaws.com/YOUR_BUCKET/aws-cfn-ses-domain-VERSION.cf.yaml
@@ -58,25 +64,34 @@ The easiest way to do this is with a CloudFormation [nested stack][NestedStack]:
         LambdaCodeS3Key: aws-cfn-ses-domain-VERSION.lambda.zip
 ```
 
-The `Custom::SES_Domain` resource type is now available to use like this (see 
-[Usage](#usage) below for the full list of properties and return values):
+The `Custom::SES_Domain` and `Custom::SES_EmailIdentity` resource types are now 
+available to use like this (see [Usage](#usage) below for the full list of properties 
+and return values):
 
 ```yaml
   MySESDomain:
     Type: Custom::SES_Domain
     Properties:
-      # ServiceToken must be the Arn of the Lambda Function:
-      ServiceToken: !GetAtt CfnSESDomain.Outputs.Arn
+      ServiceToken: !GetAtt CfnSESResources.Outputs.CustomDomainIdentityArn
       Domain: "example.com"
+      # ...
+
+  MySESEmailIdentity:
+    Type: Custom::SES_EmailIdentity
+    Properties:
+      ServiceToken: !GetAtt CfnSESResources.Outputs.CustomEmailIdentityArn
+      EmailAddress: "sender@example.com"
       # ...
 ```
 
-If you'd prefer to build and upload the `Custom::SES_Domain` code from source, 
+If you'd prefer to build and upload the custom resource code from source, 
 see the [Development](#development) section.
 
 
 
 ## Usage
+
+### `Custom::SES_Domain`
 
 To work with a `Custom::SES_Domain` resource in your CloudFormation template, you'll
 typically:
@@ -98,7 +113,7 @@ Here's how that looks in a cloudformation.yaml template…
 ```yaml
 Resources:
   # 1. Define the Custom::SES_Domain's Lambda Function via a nested stack. 
-  CfnSESDomain:
+  CfnSESResources:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: https://s3.amazonaws.com/YOUR_BUCKET/aws-cfn-ses-domain-VERSION.cf.yaml
@@ -110,8 +125,8 @@ Resources:
   MySESDomain:
     Type: Custom::SES_Domain
     Properties:
-      # ServiceToken is the Arn of the Lambda Function defined above:
-      ServiceToken: !GetAtt CfnSESDomain.Outputs.Arn
+      # ServiceToken is the Arn of a Lambda Function from the nested stack:
+      ServiceToken: !GetAtt CfnSESResources.Outputs.CustomDomainIdentityArn
       # Remaining Properties are options for provisioning for your SES domain identity:
       # (Domain is required; all others are optional and shown with their defaults)
       Domain: "example.com"
@@ -134,16 +149,21 @@ Resources:
       RecordSets: !GetAtt MySESDomain.Route53RecordSets
 ```
 
-### Properties
+#### Properties
 
 A `Custom::SES_Domain` resource supports the following Properties:
 
 ##### `ServiceToken`
 
 The ARN of the Lambda Function that implements the `Custom::SES_Domain` type.
-See [Installation](#installation) above for a simple way to obtain this.
 (This is a standard property of all CloudFormation 
 [AWS::CloudFormation::CustomResource][CustomResource] types.)
+
+If you are using a nested stack as recommended in [Installation](#installation) above,
+the `ServiceToken` should be set to the nested stack's `Outputs.CustomDomainIdentityArn`.
+
+Note that `Custom::SES_Domain` and `Custom::SES_EmailIdentity` use *different*
+ServiceToken ARNs, even though both are provided from the same nested stack. 
 
 *Required:* Yes
 
@@ -278,9 +298,9 @@ lambda function is running.)
 
 
 
-### Return Values
+#### Return Values
 
-#### Ref
+##### Ref
 
 When a `Custom::SES_Domain` resource is provided to the `Ref` intrinsic function, 
 `Ref` returns the Amazon Resource Name (ARN) of the Amazon SES domain identity 
@@ -290,14 +310,14 @@ When a `Custom::SES_Domain` resource is provided to the `Ref` intrinsic function
 as `!GetAtt MySESDomain.Domain`).
 
 
-#### Fn::GetAtt
+##### Fn::GetAtt
 
 A `Custom::SES_Domain` resource returns several [`Fn::GetAtt`][GetAtt] attributes that 
 can be used with other CloudFormation resources to maintain the required DNS records 
 for your Amazon SES domain.
 
 
-##### `Route53RecordSets`
+###### `Route53RecordSets`
 
 A List of [`AWS::Route53::RecordSet`][RecordSet] objects specifying the DNS records
 required for the `Custom::SES_Domain` identity.
@@ -318,7 +338,7 @@ will change accordingly, and CloudFormation will figure out the precise updates
 needed to the Route 53 records.
 
 
-##### `ZoneFileEntries`
+###### `ZoneFileEntries`
 
 A List of String lines that can be used in a standard [Zone File][ZoneFile] to specify 
 the DNS records required for the `Custom::SES_Domain` identity. The *name* field in each
@@ -349,7 +369,7 @@ Outputs:
 ```
 
 
-##### Other attributes
+###### Other attributes
 
 A `Custom::SES_Domain` resource provides several other SES-related attributes which
 may be helpful for generating custom DNS records or other purposes:
@@ -385,19 +405,139 @@ may be helpful for generating custom DNS records or other purposes:
   was provisioned 
 
 
+### `Custom::SES_EmailIdentity`
+
+To work with a `Custom::SES_EmailIdentity` resource in your CloudFormation template, 
+you'll typically:
+
+1. Define the AWS Lambda Function that implements the `Custom::SES_EmailIdentity` 
+  CloudFormation custom resource type, as shown in [Installation](#installation) above.
+
+2. Declare one or more `Custom::SES_EmailIdentity` resource for your the email addresses
+   you need to verify. 
+
+Here's how that looks in a cloudformation.yaml template…
+
+```yaml
+Resources:
+  # 1. Define the Custom::SES_EmailIdentity's Lambda Function via a nested stack. 
+  CfnSESResources:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://s3.amazonaws.com/YOUR_BUCKET/aws-cfn-ses-domain-VERSION.cf.yaml
+      Parameters:
+        LambdaCodeS3Bucket: YOUR_BUCKET
+        LambdaCodeS3Key: aws-cfn-ses-domain-VERSION.lambda.zip
+
+  # 2. Declare Custom::SES_EmailIdentity resources for each address to verify.
+  MySESSender:
+    Type: Custom::SES_EmailIdentity
+    Properties:
+      # ServiceToken is the Arn of a Lambda Function from the nested stack:
+      ServiceToken: !GetAtt CfnSESResources.Outputs.CustomEmailIdentityArn
+      # Remaining Properties are options for verifying the email address:
+      # (EmailAddress is required; all others are optional and shown with their defaults)
+      EmailAddress: "sender@example.com"
+      Region: !Ref "AWS::Region"
+
+  MySESReplyTo:
+    Type: Custom::SES_EmailIdentity
+    Properties:
+      ServiceToken: !GetAtt CfnSESResources.Outputs.CustomEmailIdentityArn
+      EmailAddress: "noreply@example.com"
+```
+
+#### Properties
+
+##### `ServiceToken`
+
+The ARN of the Lambda Function that implements the `Custom::SES_EmailIdentity` type.
+(This is a standard property of all CloudFormation 
+[AWS::CloudFormation::CustomResource][CustomResource] types.)
+
+If you are using a nested stack as recommended in [Installation](#installation) above,
+the `ServiceToken` should be set to the nested stack's `Outputs.CustomEmailIdentityArn`.
+
+Note that `Custom::SES_EmailIdentity` and `Custom::SES_Domain` use *different*
+ServiceToken ARNs, even though both are provided from the same nested stack. 
+
+*Required:* Yes
+
+*Type:* String
+
+*Update requires:* Updates are not supported
+
+
+##### `EmailAddress` 
+
+The email address you want to verify for sending through Amazon SES, such as 
+`sender@example.com`. This cannot include any "display name", and must be a single
+email address. (If you need to verify multiple addresses, simply create as many
+`Custom::SES_EmailAddress` resources as needed.)
+
+AWS will send a verification email to this address the first time the stack containing
+the `Custom::SES_EmailAddress` resource is deployed, and again on any stack updates
+that alter the resource (such as changing its `Region`). 
+
+For more information, see [Verifying Email Addresses in Amazon SES][verifying-ses-emails] 
+in the *Amazon SES Developer Guide.*
+
+*Required:* Yes
+
+*Type:* String
+
+*Update requires:* Replacement
+
+
+##### `Region`
+
+The AWS Region where the email address will be verified, e.g., `"us-east-1"`. 
+This must be a region where Amazon SES is supported. The default is the region where
+your CloudFormation stack is running (or technically, where the 
+`Custom::SES_EmailIdentity` lambda function is running.)
+
+*Required:* No
+
+*Type:* String
+
+*Default:* `${AWS::Region}`
+
+*Update requires:* Replacement
+
+
+#### Return Values
+
+##### Ref
+
+When a `Custom::SES_EmailIdentity` resource is provided to the `Ref` intrinsic function, 
+`Ref` returns the Amazon Resource Name (ARN) of the Amazon SES email identity 
+(e.g., `arn:aws:ses:us-east-1:111111111111:identity/sender@example.com`).
+
+##### Fn::GetAtt
+
+A `Custom::SES_EmailIdentity` resource returns a few [`Fn::GetAtt`][GetAtt] attributes
+that may be helpful for working with it elsewhere in your template.
+
+* `Arn` (String): the Amazon Resource Name (ARN) of the Amazon SES email identity 
+  (this is the same value returned by [`!Ref MySESEmailAddress`](#ref-1))
+* `EmailAddress` (String): the [`EmailAddress`](#emailaddress) that was verified
+* `Region` (String): the resolved [`Region`](#region-1) where the email identity 
+  was verified 
+
+
 ### Validating Your Templates
 
 If you use [cfn-lint][] (recommended!) to check your CloudFormation templates,
-you can include an "override spec" so your `Custom::SES_Domain` properties and 
-attributes will be validated. Download a copy of 
-[CustomSESDomainSpecification.json](CustomSESDomainSpecification.json) and then:
+you can include an "override spec" so your `Custom::SES_Domain` and 
+`Custom::SES_EmailIdentity` properties and attributes will be validated. Download a 
+copy of [CustomSESDomainSpecification.json](CustomSESDomainSpecification.json) and then:
 
 ```bash
 cfn-lint --override-spec CustomSESDomainSpecification.json YOUR-TEMPLATE.cf.yaml
 ``` 
 
 (Without the override-spec, cfn-lint will allow *any* properties and values for
-`Custom::SES_Domain` resources.)
+`Custom::SES_Domain` and `Custom::SES_EmailIdentity` resources.)
 
 
 ## Development
@@ -448,15 +588,23 @@ domain identity features:
 * Control over Easy DKIM enabling (SES:SetIdentityDkimEnabled—currently, 
   `Custom::SES_Domain` assumes if you are enabling sending, you also want Easy DKIM)
 
+And the `Custom::SES_EmailIdentity` implementation is currently missing this Amazon SES
+email identity feature:
+
+* Ability to use a custom verification email template (SES:SendCustomVerificationEmail)
+  and configuration set when verifying an email address.
+
 Adding them is likely straightforward; contributions are welcome.
 
-Are you from Amazon? It'd be great to have an `AWS::SES::Domain` resource
+Are you from Amazon? It'd be great to have the SES domain and email identity resources
 standard in CloudFormation. Please consider adopting or obsoleting this package. 
 (Just reach out if you'd like me to assign or transfer it.)
 
 
 [cfn-lint]:
   https://github.com/awslabs/cfn-python-lint
+[cfn-ses-resources]:
+  https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/AWS_SES.html
 [CloudFormation]:
   https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/Welcome.html
 [custom-mail-from-domain]: 
@@ -487,5 +635,7 @@ standard in CloudFormation. Please consider adopting or obsoleting this package.
   https://docs.aws.amazon.com/ses/latest/APIReference/API_VerifyDomainIdentity.html
 [verifying-ses-domains]: 
   https://docs.aws.amazon.com/ses/latest/DeveloperGuide/verify-domains.html
+[verifying-ses-emails]: 
+  https://docs.aws.amazon.com/ses/latest/DeveloperGuide/verify-email-addresses.html
 [ZoneFile]: 
   https://en.wikipedia.org/wiki/Zone_file
