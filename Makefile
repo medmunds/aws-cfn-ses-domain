@@ -210,7 +210,8 @@ clean:
 ## Run tests
 test:
 	$(PYTHON) -m unittest discover \
-		--start-directory '$(TESTS_DIR)'
+		--start-directory '$(TESTS_DIR)' \
+		--top-level-directory .
 
 
 .PHONY: check
