@@ -1,8 +1,15 @@
 # Changelog
 
-## v0.3.dev0
+## v0.4.dev0
 
 *Unreleased changes*
+
+(none yet)
+
+
+## v0.3
+
+*2020-01-07*
 
 ### Breaking changes
 
