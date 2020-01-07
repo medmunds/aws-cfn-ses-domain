@@ -21,6 +21,11 @@
 * Support using the [`Region`](README.md#region) property to provision an Amazon SES 
   domain in a different region from where you're running your CloudFormation stack.
   (Thanks to @gfodor.)
+  
+* Fix incorrect handling of `EnableSend: false` and other potential problems with
+  Boolean properties, by working around CloudFormation's non-standard YAML parsing. 
+  (Thanks to @aajtodd.)
+
 
 ### Features
 

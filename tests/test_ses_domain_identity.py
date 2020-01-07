@@ -98,8 +98,8 @@ class TestDomainIdentityHandler(HandlerTestCase):
             "RequestType": "Create",
             "ResourceProperties": {
                 "Domain": "example.com.",
-                "EnableSend": True,
-                "EnableReceive": True,
+                "EnableSend": "true",
+                "EnableReceive": "true",
                 "MailFromSubdomain": "bounce",
                 "CustomDMARC": '"v=DMARC1; p=quarantine; rua=mailto:d@example.com;"',
                 "TTL": "300",
@@ -166,8 +166,8 @@ class TestDomainIdentityHandler(HandlerTestCase):
             "RequestType": "Update",
             "ResourceProperties": {
                 "Domain": "example.com.",
-                "EnableSend": False,
-                "EnableReceive": True,
+                "EnableSend": "false",
+                "EnableReceive": "true",
                 "CustomDMARC": None,
             },
             "StackId": self.mock_stack_id}
@@ -208,8 +208,8 @@ class TestDomainIdentityHandler(HandlerTestCase):
             "PhysicalResourceId": "arn:aws:ses:mock-region:111111111111:identity/example.com",
             "ResourceProperties": {
                 "Domain": "example.com.",
-                "EnableSend": True,
-                "EnableReceive": True,
+                "EnableSend": "true",
+                "EnableReceive": "true",
             },
             "StackId": self.mock_stack_id}
         self.ses_stubber.add_response(
@@ -244,8 +244,8 @@ class TestDomainIdentityHandler(HandlerTestCase):
             "PhysicalResourceId": "example.com",  # old format: just the domain
             "ResourceProperties": {
                 "Domain": "example.com.",
-                "EnableSend": True,
-                "EnableReceive": True,
+                "EnableSend": "true",
+                "EnableReceive": "true",
             },
             "StackId": self.mock_stack_id}
         # self.ses_stubber.nothing: *no* SES ops should occur
@@ -280,3 +280,17 @@ class TestDomainIdentityHandler(HandlerTestCase):
             'ERROR:root:Error updating SES: An error occurred (InvalidParameterValue) when'
             ' calling the VerifyDomainIdentity operation: Invalid domain name bad domain name.',
             cm.output[0])
+
+    def test_invalid_boolean_property(self):
+        event = {
+            "RequestType": "Create",
+            "ResourceProperties": {
+                "Domain": "example.com",
+                "EnableSend": "yes",
+            },
+            "StackId": self.mock_stack_id}
+        handle_domain_identity_request(event, self.mock_context)
+        self.assertSentResponse(
+            event, status="FAILED",
+            reason="The 'EnableSend' property must be 'true' or 'false', not 'yes'.",
+            physical_resource_id=MOCK_ANY)
