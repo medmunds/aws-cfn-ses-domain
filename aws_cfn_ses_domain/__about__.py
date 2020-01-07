@@ -14,18 +14,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-VERSION = (0, 3, 'dev0')
+VERSION = (0, 3)
 __version__ = ".".join(str(v) for v in VERSION)
 
 NAME = "aws-cfn-ses-domain"
-DESCRIPTION = "AWS CloudFormation custom resource for managing Amazon SES domains"
+DESCRIPTION = "AWS CloudFormation resources for Amazon SES domain and email identities"
 HOMEPAGE = "https://github.com/medmunds/aws-cfn-ses-domain"
 AUTHOR = "Mike Edmunds"
 AUTHOR_EMAIL = "medmunds@gmail.com"
 LICENSE = "Apache License 2.0"
 
 CLASSIFIERS = [
-    'Development Status :: 3 - Alpha',
+    'Development Status :: 4 - Beta',
     'Intended Audience :: Developers',
     'License :: OSI Approved :: Apache Software License',
     'Topic :: System :: Installation/Setup',
