@@ -8,8 +8,7 @@ import boto3
 from botocore.exceptions import BotoCoreError, ClientError
 
 from .cfnresponse import FAILED, SUCCESS, send
-from .utils import format_arn
-
+from .utils import format_arn, to_bool
 
 logger = logging.getLogger()
 logger.setLevel(os.getenv("LOG_LEVEL", "WARNING"))
@@ -24,6 +23,7 @@ DEFAULT_PROPERTIES = {
     "TTL": "1800",
     "Region": os.getenv("AWS_REGION"),  # where the stack (lambda fn) is running
 }
+BOOLEAN_PROPERTIES = ("EnableSend", "EnableReceive")
 
 
 def handle_domain_identity_request(event, context):
@@ -51,6 +51,17 @@ def handle_domain_identity_request(event, context):
         service="ses", region=properties["Region"],
         resource_type="identity", resource_name=domain,
         defaults_from=event["StackId"])  # current stack's ARN has account and partition
+
+    for prop in BOOLEAN_PROPERTIES:
+        # CloudFormation may convert YAML/JSON bools to strings, so reverse that
+        # https://github.com/medmunds/aws-cfn-ses-domain/issues/10
+        try:
+            properties[prop] = to_bool(properties[prop])
+        except ValueError:
+            return send(event, context, FAILED,
+                        reason=f"The '{prop}' property must be 'true' or 'false',"
+                               f" not '{properties[prop]}'.",
+                        physical_resource_id=domain_arn)
 
     if event["RequestType"] == "Delete" and event["PhysicalResourceId"] == domain:
         # v0.3 backwards compatibility:
