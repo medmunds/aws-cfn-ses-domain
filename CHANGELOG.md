@@ -24,8 +24,20 @@
 
 ### Features
 
+* Add a new [`Custom::SES_EmailIdentity`](README.md#customses_emailidentity) custom
+  resource type for managing Amazon SES verified email addresses.
+
 * Make [`Arn`](README.md#other-attributes) and [`Region`](README.md#other-attributes)
   attributes available on `Custom::SES_Domain` resources.
+
+### Deprecations
+
+* The `ServiceToken` used for a `Custom::SES_Domain` has changed from the nested stack's
+  `...Outputs.Arn` to `...Outputs.CustomDomainIdentityArn` (to distinguish it from the 
+  new `...Outputs.CustomEmailIdentityArn` for `Custom::SES_EmailIdentity` resources).
+  If your templates use something like `ServiceToken: !GetAtt CfnSESDomain.Outputs.Arn`, 
+  they will continue to work with v0.3, but you should replace `Arn` to prepare for
+  future releases: `ServiceToken: !GetAtt CfnSESDomain.Outputs.CustomDomainIdentityArn`.
 
 
 ## v0.2

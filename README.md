@@ -1,4 +1,4 @@
-# Amazon CloudFormation missing resources for Amazon SES
+# AWS CloudFormation resources for Amazon SES domain and email identities
 
 AWS [CloudFormation][] provides several built-in 
 [Amazon SES resource types][cfn-ses-resources], but is oddly missing the ones 
@@ -156,9 +156,11 @@ A `Custom::SES_Domain` resource supports the following Properties:
 ##### `ServiceToken`
 
 The ARN of the Lambda Function that implements the `Custom::SES_Domain` type.
-See [Installation](#installation) above for a simple way to obtain this.
 (This is a standard property of all CloudFormation 
 [AWS::CloudFormation::CustomResource][CustomResource] types.)
+
+If you are using a nested stack as recommended in [Installation](#installation) above,
+the `ServiceToken` should be set to the nested stack's `Outputs.CustomDomainIdentityArn`.
 
 Note that `Custom::SES_Domain` and `Custom::SES_EmailIdentity` use *different*
 ServiceToken ARNs, even though both are provided from the same nested stack. 
@@ -450,11 +452,13 @@ Resources:
 ##### `ServiceToken`
 
 The ARN of the Lambda Function that implements the `Custom::SES_EmailIdentity` type.
-See [Installation](#installation) above for a simple way to obtain this.
 (This is a standard property of all CloudFormation 
 [AWS::CloudFormation::CustomResource][CustomResource] types.)
 
-Note that `Custom::SES_Domain` and `Custom::SES_EmailIdentity` use *different*
+If you are using a nested stack as recommended in [Installation](#installation) above,
+the `ServiceToken` should be set to the nested stack's `Outputs.CustomEmailIdentityArn`.
+
+Note that `Custom::SES_EmailIdentity` and `Custom::SES_Domain` use *different*
 ServiceToken ARNs, even though both are provided from the same nested stack. 
 
 *Required:* Yes
@@ -584,9 +588,15 @@ domain identity features:
 * Control over Easy DKIM enabling (SES:SetIdentityDkimEnabled—currently, 
   `Custom::SES_Domain` assumes if you are enabling sending, you also want Easy DKIM)
 
+And the `Custom::SES_EmailIdentity` implementation is currently missing this Amazon SES
+email identity feature:
+
+* Ability to use a custom verification email template (SES:SendCustomVerificationEmail)
+  and configuration set when verifying an email address.
+
 Adding them is likely straightforward; contributions are welcome.
 
-Are you from Amazon? It'd be great to have these resources
+Are you from Amazon? It'd be great to have the SES domain and email identity resources
 standard in CloudFormation. Please consider adopting or obsoleting this package. 
 (Just reach out if you'd like me to assign or transfer it.)
 
