@@ -1,52 +1,52 @@
 {
   "ResourceTypes": {
     "Custom::SES_Domain": {
-      "Documentation": "https://github.com/medmunds/aws-cfn-ses-domain/blob/master/README.md",
+      "Documentation": "https://github.com/medmunds/aws-cfn-ses-domain/blob/main/README.md",
       "Properties": {
         "ServiceToken": {
-          "Documentation": "https://github.com/medmunds/aws-cfn-ses-domain/blob/master/README.md#servicetoken",
+          "Documentation": "https://github.com/medmunds/aws-cfn-ses-domain/blob/main/README.md#servicetoken",
           "PrimitiveType": "String",
           "Required": true,
           "UpdateType": "Immutable"
         },
         "Domain": {
-          "Documentation": "https://github.com/medmunds/aws-cfn-ses-domain/blob/master/README.md#domain",
+          "Documentation": "https://github.com/medmunds/aws-cfn-ses-domain/blob/main/README.md#domain",
           "PrimitiveType": "String",
           "Required": true,
           "UpdateType": "Immutable"
         },
         "EnableSend": {
-          "Documentation": "https://github.com/medmunds/aws-cfn-ses-domain/blob/master/README.md#enablesend",
+          "Documentation": "https://github.com/medmunds/aws-cfn-ses-domain/blob/main/README.md#enablesend",
           "PrimitiveType": "Boolean",
           "Required": false,
           "UpdateType": "Mutable"
         },
         "EnableReceive": {
-          "Documentation": "https://github.com/medmunds/aws-cfn-ses-domain/blob/master/README.md#enablereceive",
+          "Documentation": "https://github.com/medmunds/aws-cfn-ses-domain/blob/main/README.md#enablereceive",
           "PrimitiveType": "Boolean",
           "Required": false,
           "UpdateType": "Mutable"
         },
         "MailFromSubdomain": {
-          "Documentation": "https://github.com/medmunds/aws-cfn-ses-domain/blob/master/README.md#mailfromsubdomain",
+          "Documentation": "https://github.com/medmunds/aws-cfn-ses-domain/blob/main/README.md#mailfromsubdomain",
           "PrimitiveType": "String",
           "Required": false,
           "UpdateType": "Mutable"
         },
         "CustomDMARC": {
-          "Documentation": "https://github.com/medmunds/aws-cfn-ses-domain/blob/master/README.md#customdmarc",
+          "Documentation": "https://github.com/medmunds/aws-cfn-ses-domain/blob/main/README.md#customdmarc",
           "PrimitiveType": "String",
           "Required": false,
           "UpdateType": "Mutable"
         },
         "TTL": {
-          "Documentation": "https://github.com/medmunds/aws-cfn-ses-domain/blob/master/README.md#ttl",
+          "Documentation": "https://github.com/medmunds/aws-cfn-ses-domain/blob/main/README.md#ttl",
           "PrimitiveType": "String",
           "Required": false,
           "UpdateType": "Mutable"
         },
         "Region": {
-          "Documentation": "https://github.com/medmunds/aws-cfn-ses-domain/blob/master/README.md#region",
+          "Documentation": "https://github.com/medmunds/aws-cfn-ses-domain/blob/main/README.md#region",
           "PrimitiveType": "String",
           "Required": false,
           "UpdateType": "Immutable"
@@ -95,22 +95,22 @@
       }
     },
     "Custom::SES_EmailIdentity": {
-      "Documentation": "https://github.com/medmunds/aws-cfn-ses-domain/blob/master/README.md",
+      "Documentation": "https://github.com/medmunds/aws-cfn-ses-domain/blob/main/README.md",
       "Properties": {
         "ServiceToken": {
-          "Documentation": "https://github.com/medmunds/aws-cfn-ses-domain/blob/master/README.md#servicetoken-2",
+          "Documentation": "https://github.com/medmunds/aws-cfn-ses-domain/blob/main/README.md#servicetoken-2",
           "PrimitiveType": "String",
           "Required": true,
           "UpdateType": "Immutable"
         },
         "EmailAddress": {
-          "Documentation": "https://github.com/medmunds/aws-cfn-ses-domain/blob/master/README.md#emailaddress",
+          "Documentation": "https://github.com/medmunds/aws-cfn-ses-domain/blob/main/README.md#emailaddress",
           "PrimitiveType": "String",
           "Required": true,
           "UpdateType": "Immutable"
         },
         "Region": {
-          "Documentation": "https://github.com/medmunds/aws-cfn-ses-domain/blob/master/README.md#region-2",
+          "Documentation": "https://github.com/medmunds/aws-cfn-ses-domain/blob/main/README.md#region-2",
           "PrimitiveType": "String",
           "Required": false,
           "UpdateType": "Immutable"

@@ -250,7 +250,7 @@ double quotes around the entire string (which requires escaping in JSON or wrapp
 in single quotes in YAML). Example:
 
 ```yaml
-    CustomDMARC: '"v=DMARC1; p=reject; pct=100; rua=mailto:postmaster@example.com"'
+    CustomDMARC: '"v=DMARC1; p=reject; pct=100; rua=mailto:admin@example.com"'
 ```
 
 To *disable* generating a DMARC record, set to an empty string: `CustomDMARC: ''`.

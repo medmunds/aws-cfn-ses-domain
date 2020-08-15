@@ -195,7 +195,7 @@ else
 	$(PYTHON) release-github.py \
 	  --repo '$(GITHUB_REPO)' \
 	  --tag 'v$(VERSION)' \
-	  --description 'See the [CHANGELOG](https://github.com/{repo}/blob/master/CHANGELOG.md#{tag_id})' \
+	  --description 'See the [CHANGELOG](https://github.com/{repo}/blob/main/CHANGELOG.md#{tag_id})' \
 	  --assets $^
 endif
 
