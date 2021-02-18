@@ -4,4 +4,4 @@ dist/
 publish/
 *.egg-info/
 *.pyc
-Pipfile.lock
+.python-version

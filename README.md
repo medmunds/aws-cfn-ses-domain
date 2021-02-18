@@ -542,13 +542,17 @@ cfn-lint --override-spec CustomSESDomainSpecification.json YOUR-TEMPLATE.cf.yaml
 
 ## Development
 
-Development requires GNU Make (standard on most Linux-like systems) and [pipenv][].
-(Pipenv is used only to manage the development environment; package requirements are
-tracked in `setup.py`.)
+Development requires GNU Make (standard on most Linux-like systems) and Python 3.
+Ideally—particularly if you are changing code and running tests—you'll use the same
+version of Python that the Lambda Functions run (check the `Runtime` directives in
+[aws-cfn-ses-domain.cf.yaml][./aws-cfn-ses-domain.cf.yaml]), but any Python 3 should
+be fine.
 
-To set up your development environment, clone the repository and then run `make init`.
-(This just runs `pipenv install`. If you are a package maintainer who will release
-to PyPI, use `pipenv install --dev` instead.)
+To set up your development environment:
+1. Clone the repository.
+2. (Recommended) create and activate a Python venv for development.
+   ([pyenv] and [pyenv-virtualenv] are very helpful for this.) 
+3. Run `make init`. (This just runs `pip3 install -r requirements-dev.txt`.)
 
 To see a list of available make targets, run `make help`.
 
@@ -623,8 +627,10 @@ standard in CloudFormation. Please consider adopting or obsoleting this package.
   https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-route53-recordset.html
 [RecordSetGroup]: 
   https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-route53-recordsetgroup.html
-[pipenv]:
-  https://pipenv.readthedocs.io/
+[pyenv]:
+  https://github.com/pyenv/pyenv
+[pyenv-virtualenv]:
+  https://github.com/pyenv/pyenv-virtualenv
 [releases]: 
   https://github.com/medmunds/aws-cfn-ses-domain/releases
 [ses-smtp-endpoints]: 
