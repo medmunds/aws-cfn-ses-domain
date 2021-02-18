@@ -30,7 +30,7 @@ class HandlerTestCase(TestCase):
         if self.patch_base == HandlerTestCase.patch_base:
             raise NotImplementedError(f"{self.__class__.__name__} must override patch_base")
 
-        ses = boto3.client('ses')  # need a real client for Stubber
+        ses = boto3.client('ses', region_name='STUBBED')  # need a real client for Stubber
         boto3_client_patcher = patch(f'{self.patch_base}.boto3.client', return_value=ses)
         self.mock_boto3_client = boto3_client_patcher.start()
         self.addCleanup(boto3_client_patcher.stop)
