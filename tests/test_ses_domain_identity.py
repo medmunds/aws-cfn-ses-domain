@@ -1,8 +1,5 @@
-import os
-
 from .base import HandlerTestCase, MOCK_ANY
 
-os.environ["AWS_REGION"] = "mock-region"  # (before importing handler)
 from aws_cfn_ses_domain.ses_domain_identity import handle_domain_identity_request
 
 

@@ -201,7 +201,8 @@ test:
 .PHONY: check
 ## Run lint and similar code checks
 check: $(cf_sources)
-	# TODO: replace with flake8 $(PIPENV) check --style
+	$(PYTHON) -m flake8 --max-line-length=120 \
+		$(filter %.py,$(lambda_sources)) $(TESTS_DIR)
 	$(CFN_LINT) --override-spec CustomSESDomainSpecification.json $^
 
 
