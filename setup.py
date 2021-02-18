@@ -40,7 +40,7 @@ setup(
         # 'boto3>=1.12',
     ],
     extras_require={
-        # use `pipenv install --dev` for dev requirements
+        # use `pip3 install -r requirements-dev.txt` for dev requirements
         'test': ['boto3'],
     },
 )

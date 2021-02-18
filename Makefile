@@ -18,18 +18,16 @@ PY_DIST_DIR := dist
 TESTS_DIR := tests
 
 #
-# Python pipenv and tools
-# - If you want to run without pipenv, use `make PIPENV= target`.
-#   (You'll need all the Python tools listed below installed in
-#   your own activated virtualenv, or globally.)
-PIPENV := pipenv
-PIPENV_RUN := $(if $(strip $(PIPENV)), $(PIPENV) run,)
+# Python tools
+# (You'll generally want to work in a venv.
+# pyenv and pyenv-virtualenv can simplify this.)
+#
 
-AWS := $(PIPENV_RUN) aws
-CFN_LINT := $(PIPENV_RUN) cfn-lint
-PYTHON := $(PIPENV_RUN) python
-PIP := $(PIPENV_RUN) pip
-TWINE := $(PIPENV_RUN) twine
+AWS := aws
+CFN_LINT := cfn-lint
+PYTHON := python3
+PIP := $(PYTHON) -m pip
+TWINE := twine
 
 #
 # Package info
@@ -39,14 +37,6 @@ SIMPLE_TARGETS := clean help init
 COMPLEX_GOALS := $(filter-out $(SIMPLE_TARGETS), $(MAKECMDGOALS))
 ifneq ($(strip $(COMPLEX_GOALS)),)
 # at least one goal is not simple...
-
-# Verify pipenv venv exists--otherwise it'll get auto-created without `--dev`
-# by $(PYTHON) (pipenv run python) in later variable defs:
-ifdef PIPENV
-ifneq ($(shell $(PIPENV) --venv >/dev/null 2>&1; echo $$?), 0)
-$(error Pipenv virtualenv does not exist; use `make init` to set it up)
-endif
-endif
 
 # Package metadata
 NAME := $(shell $(PYTHON) setup.py --name)
@@ -158,15 +148,9 @@ endif
 
 
 .PHONY: init
-## Set up the development environment (using pipenv)
+## Set up the development environment
 init:
-ifeq ($(strip $(PIPENV)),)
-	$(error You must manage your own Python virtualenv when PIPENV is disabled)
-else ifeq ($(shell which $(PIPENV)),)
-	$(error Can't find $(PIPENV); see https://pipenv.readthedocs.io/ to install)
-else
-	$(PIPENV) install
-endif
+	$(PIP) install -r requirements-dev.txt
 
 
 .PHONY: release
@@ -217,7 +201,7 @@ test:
 .PHONY: check
 ## Run lint and similar code checks
 check: $(cf_sources)
-	$(PIPENV) check --style
+	# TODO: replace with flake8 $(PIPENV) check --style
 	$(CFN_LINT) --override-spec CustomSESDomainSpecification.json $^
 
 
