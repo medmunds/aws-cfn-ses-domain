@@ -1,8 +1,14 @@
+import os
 from unittest import TestCase
 from unittest.mock import patch, ANY as MOCK_ANY
 
 import boto3
 from botocore.stub import Stubber
+
+
+# Mock the AWS Lambda Runtime environment
+# (to the extent helpful for mock tests locally).
+os.environ["AWS_REGION"] = "mock-region"  # (before importing handler)
 
 
 class HandlerTestCase(TestCase):
