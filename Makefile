@@ -65,8 +65,13 @@ endif  # has COMPLEX_GOALS
 # Misc
 #
 
+ifdef TERM
 BOLD := $(shell tput setaf 15)
 RESET := $(shell tput sgr0)
+else
+BOLD :=
+RESET :=
+endif
 
 # print a bold heading comment in the output
 # $(call heading, Banner Text [no commas allowed])

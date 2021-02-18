@@ -1,0 +1,31 @@
+name: CI/CD
+
+on:
+  push:
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          # This should match Lambda Runtime directive from aws-cfn-ses-domain.cf.yaml
+          python-version: 3.6
+
+      - name: Install dependencies
+        run: make init
+
+      - name: Check
+        run: make check
+
+      - name: Test
+        run: make test
+
+      - name: Build
+        run: make all
