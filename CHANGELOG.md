@@ -1,8 +1,8 @@
 # Changelog
 
-## v0.4.dev0
+## v0.4
 
-*Unreleased changes*
+*2022-05-13*
 
 ### Fixes
 
