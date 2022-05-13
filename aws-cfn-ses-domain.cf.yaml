@@ -102,7 +102,7 @@ Resources:
       Description: CloudFormation custom SES domain provisioning
       Handler: index.handle_domain_identity_request
       Role: !GetAtt CustomDomainLambdaExecutionRole.Arn
-      Runtime: python3.6
+      Runtime: python3.9
       Code:
         S3Bucket: !Ref LambdaCodeS3Bucket
         S3Key: !Ref LambdaCodeS3Key
@@ -113,7 +113,7 @@ Resources:
       Description: CloudFormation custom SES email identity provisioning
       Handler: index.handle_email_identity_request
       Role: !GetAtt CustomEmailLambdaExecutionRole.Arn
-      Runtime: python3.6
+      Runtime: python3.9
       Code:
         S3Bucket: !Ref LambdaCodeS3Bucket
         S3Key: !Ref LambdaCodeS3Key

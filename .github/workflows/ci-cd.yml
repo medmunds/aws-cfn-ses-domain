@@ -16,7 +16,7 @@ jobs:
         uses: actions/setup-python@v2
         with:
           # This should match Lambda Runtime directive from aws-cfn-ses-domain.cf.yaml
-          python-version: 3.6
+          python-version: 3.9
 
       - name: Install dependencies
         run: make init
