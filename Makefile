@@ -27,7 +27,7 @@ AWS := aws
 CFN_LINT := cfn-lint
 PYTHON := python3
 PIP := $(PYTHON) -m pip
-TWINE := twine
+TWINE := $(PYTHON) -m twine
 
 #
 # Package info
@@ -180,7 +180,7 @@ ifndef GITHUB_TOKEN
 else
 	$(call heading, Releasing v$(VERSION) to GitHub $(GITHUB_REPO))
 	git tag -m 'Release $(VERSION)' 'v$(VERSION)'
-	git push --tags
+	git push --follow-tags
 	$(PYTHON) release-github.py \
 	  --repo '$(GITHUB_REPO)' \
 	  --tag 'v$(VERSION)' \
