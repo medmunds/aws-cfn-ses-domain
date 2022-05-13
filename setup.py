@@ -32,7 +32,7 @@ setup(
     keywords=" ".join(about["KEYWORDS"]),
 
     packages=packages,
-    python_requires='>=3.6.0',
+    python_requires='>=3.9.0',
     install_requires=[
         # Requirements listed here will be bundled into the Lambda Function zip file.
         # Note that the AWS Lambda execution environment has boto3 pre-installed.

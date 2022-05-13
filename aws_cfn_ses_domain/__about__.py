@@ -31,7 +31,7 @@ CLASSIFIERS = [
     'Topic :: System :: Installation/Setup',
     'Topic :: System :: Systems Administration',
     'Programming Language :: Python :: 3',
-    'Programming Language :: Python :: 3.6',
+    'Programming Language :: Python :: 3.9',
 ]
 
 KEYWORDS = [

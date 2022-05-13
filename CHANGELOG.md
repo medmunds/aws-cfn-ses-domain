@@ -4,7 +4,9 @@
 
 *Unreleased changes*
 
-(none yet)
+### Fixes
+
+* Update AWS Lambda runtime to python3.9 (from deprecated python3.6).
 
 
 ## v0.3
