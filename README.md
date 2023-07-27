@@ -1,5 +1,14 @@
 # AWS CloudFormation resources for Amazon SES domain and email identities
 
+> UPDATE: AWS added the [AWS::SES::EmailIdentity][] CloudFormation resource
+> in mid-2022, so this custom resource is (finally!) no longer necessary.
+> This repository remains here for reference, but you should switch to
+> [AWS::SES::EmailIdentity][]
+
+[AWS::SES::EmailIdentity]: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ses-emailidentity.html
+
+> Earlier readme…
+
 AWS [CloudFormation][] provides several built-in 
 [Amazon SES resource types][cfn-ses-resources], but is oddly missing the ones 
 most needed to get going with SES: **domain and email verification**. 
